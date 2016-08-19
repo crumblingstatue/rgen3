@@ -2,12 +2,16 @@
 name = "rgen3-save"
 version = "0.1.0"
 authors = ["Mika Attila <radiantstatue@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/crumblingstatue/rgen3"
+description = "Manipulate Generation 3 Pokémon save files"
 
 [dependencies]
 log = "0.3"
 byteorder = "0.5"
 
 [dependencies.rgen3-string]
+version = "0.1.0"
 path = "../rgen3-string"
 
 [dev-dependencies]

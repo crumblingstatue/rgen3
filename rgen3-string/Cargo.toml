@@ -2,5 +2,6 @@
 name = "rgen3-string"
 version = "0.1.0"
 authors = ["Mika Attila <radiantstatue@gmail.com>"]
-
-[dependencies]
+license = "MIT"
+repository = "https://github.com/crumblingstatue/rgen3"
+description = "Encode/decode the proprietary string format used by Generation 3 Pokémon games"
