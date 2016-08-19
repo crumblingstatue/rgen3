@@ -1,0 +1,6 @@
+[package]
+name = "rgen3-string"
+version = "0.1.0"
+authors = ["Mika Attila <radiantstatue@gmail.com>"]
+
+[dependencies]

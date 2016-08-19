@@ -1,0 +1,2 @@
+write-mode = "overwrite"
+use-try-shorthand = true
