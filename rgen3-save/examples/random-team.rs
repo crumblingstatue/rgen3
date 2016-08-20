@@ -39,7 +39,7 @@ fn main() {
             let mut name;
             loop {
                 name = rng.choose(&NAMES).unwrap();
-                // Make we don't use the same name twice in our team
+                // Make sure we don't use the same name twice in our team
                 if chosen_names.get(name).is_none() {
                     break;
                 }
