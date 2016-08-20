@@ -6,24 +6,22 @@ use rand::{Rng, thread_rng};
 use rgen3_save::{Pokemon, SaveSections};
 use std::collections::HashSet;
 
-static NAMES: [&'static str; 16] = [
-    "Tubby",
-    "Chewbacca",
-    "Huey",
-    "Dewey",
-    "Louie",
-    "Abby",
-    "Jay Leno",
-    "Bird Jesus",
-    "Cutie Pie",
-    "Saitama",
-    "Genos",
-    "Princess",
-    "Duke Nukem",
-    "Jaden",
-    "Goku",
-    "Vegeta",
-];
+static NAMES: [&'static str; 16] = ["Tubby",
+                                    "Chewbacca",
+                                    "Huey",
+                                    "Dewey",
+                                    "Louie",
+                                    "Abby",
+                                    "Jay Leno",
+                                    "Bird Jesus",
+                                    "Cutie Pie",
+                                    "Saitama",
+                                    "Genos",
+                                    "Princess",
+                                    "Duke Nukem",
+                                    "Jaden",
+                                    "Goku",
+                                    "Vegeta"];
 
 fn main() {
     let mut args = std::env::args().skip(1);
@@ -43,7 +41,7 @@ fn main() {
                 if chosen_names.get(name).is_none() {
                     break;
                 }
-            };
+            }
             chosen_names.insert(name);
             rgen3_string::encode_string(name, &mut pokemon.nickname.0);
             pokemon.personality = rng.gen();
