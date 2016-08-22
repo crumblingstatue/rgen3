@@ -8,8 +8,9 @@ Below are the currently existing tools.
 
 ## rgen3-save
 
-A library to manipulate save files. It also includes an [example tool](rgen3-save/examples/random-team.rs) that generates a random
-pokémon team for you!
+A library to manipulate save files. It also includes an
+[example tool](rgen3-save/examples/pokefill.rs) that fills your team and PC boxes with
+random Pokémon!
 
 ![](https://hostr.co/file/970/RAqnagQdDUVh/save2.png) ![](https://hostr.co/file/970/saHSJovLiB6J/save3.png)
 
