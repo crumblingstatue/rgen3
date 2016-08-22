@@ -1,6 +1,6 @@
 //! Library for manipulating Pokémon Gen3 (Fire Red/Leaf Green, Ruby/Emerald/Sapphire) save data.
 
-#![feature(associated_consts, question_mark)]
+#![feature(question_mark)]
 
 #[macro_use]
 extern crate log;
@@ -41,7 +41,7 @@ impl Save {
         Save::read(&mut file)
     }
     /// Save the save data to a file at the provided path.
-    pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), io::Error> {
+    pub fn save_to_file<P: AsRef<Path>>(&mut self, path: P) -> Result<(), io::Error> {
         let mut file = File::create(path)?;
         self.write(&mut file)
     }
@@ -62,6 +62,7 @@ impl Save {
         SaveSections {
             team: &mut team_and_items.team,
             trainer: trainer_info,
+            pc_boxes: &mut block.pokemon_storage.boxes,
         }
     }
 }
@@ -69,6 +70,7 @@ impl Save {
 pub struct SaveSections<'a> {
     pub trainer: &'a mut TrainerInfo,
     pub team: &'a mut Vec<Pokemon>,
+    pub pc_boxes: &'a mut [PokeBox],
 }
 
 #[derive(Debug)]
@@ -79,6 +81,8 @@ struct SaveBlock {
     // Does not exist yet, meaning the game has only been saved once, and this
     // block hasn't been written over yet.
     nonexistent: bool,
+    pokemon_storage: PokemonStorage,
+    box_indexes: [usize; N_BOXES],
 }
 
 enum SectionData {
@@ -89,6 +93,7 @@ enum SectionData {
     },
     TrainerInfo(TrainerInfo),
     TeamAndItems(TeamAndItems),
+    PcBuffer(PcBuffer),
 }
 
 impl fmt::Debug for SectionData {
@@ -97,6 +102,7 @@ impl fmt::Debug for SectionData {
             SectionData::Unimplemented { .. } => f.write_str("<Unimplemented section>"),
             SectionData::TrainerInfo(ref data) => data.fmt(f),
             SectionData::TeamAndItems(ref data) => data.fmt(f),
+            SectionData::PcBuffer(ref data) => data.fmt(f),
         }
     }
 }
@@ -261,6 +267,10 @@ const POKEMON_NICK_LEN: usize = 10;
 pub struct PokemonNick(pub [u8; POKEMON_NICK_LEN]);
 #[derive(Default, Clone, Copy)]
 pub struct TrainerName(pub [u8; TRAINER_NAME_LEN]);
+#[derive(Default, Clone, Copy)]
+pub struct BoxName(pub [u8; BOX_NAME_LEN]);
+
+const BOX_NAME_LEN: usize = 8;
 
 macro_rules! debug_impl {
     ($target:ident) => {
@@ -274,6 +284,7 @@ macro_rules! debug_impl {
 
 debug_impl!(PokemonNick);
 debug_impl!(TrainerName);
+debug_impl!(BoxName);
 
 /// A Pokemon.
 #[derive(Debug, Default)]
@@ -288,6 +299,12 @@ pub struct Pokemon {
     checksum: u16,
     unknown_1: u16,
     pub data: PokemonData,
+    pub active_data: Option<PokemonActiveData>,
+}
+
+/// "Active" data that is not stored in the PC boxes.
+#[derive(Debug, Default)]
+pub struct PokemonActiveData {
     status_condition: u32,
     pub level: u8,
     pokerus_remaining: u8,
@@ -353,4 +370,42 @@ struct PokemonMisc {
     origins_info: u16,
     ivs_eggs_and_ability: u32,
     ribbons_and_obedience: u32,
+}
+
+struct PcBuffer {
+    data: [u8; DATA_SIZE as usize],
+    index: usize,
+}
+
+impl fmt::Debug for PcBuffer {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "PC Buffer {}", self.index)
+    }
+}
+
+const N_BOXES: usize = 14;
+
+#[derive(Default)]
+pub struct PokemonStorage {
+    current_box: usize,
+    boxes: [PokeBox; N_BOXES],
+}
+
+impl fmt::Debug for PokemonStorage {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Pokemon storage: (current box: {})", self.current_box)?;
+        for b in &self.boxes {
+            b.fmt(f)?;
+        }
+        Ok(())
+    }
+}
+
+const N_POKEMON_PER_BOX: usize = 30;
+
+#[derive(Debug,Default)]
+pub struct PokeBox {
+    name: BoxName,
+    wallpaper: u8,
+    pub pokemon: [Option<Pokemon>; N_POKEMON_PER_BOX],
 }

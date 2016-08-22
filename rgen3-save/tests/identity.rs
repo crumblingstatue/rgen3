@@ -18,7 +18,7 @@ fn identity() {
         // Rust's test runner has small stacks, so gotta use vec instead of array.
         let mut data = vec![0; SAVE_LEN];
         file.read_exact(&mut data[..]).unwrap();
-        let save = Save::read(&mut Cursor::new(&data[..])).unwrap();
+        let mut save = Save::read(&mut Cursor::new(&data[..])).unwrap();
         let mut writeout = vec![0; SAVE_LEN];
         {
             let mut writer = &mut writeout[..];

@@ -10,23 +10,24 @@ use {TrainerInfo, DATA_SIZE, rgen3_string, Time, Section, SectionData, SaveBlock
      EM_RU_SA_TEAMANDITEMS_UNK_LEN, FR_LG_TEAMANDITEMS_UNK_LEN, Pokemon, POKEMON_NICK_LEN,
      TRAINER_NAME_LEN, PokemonData, PokemonGrowth, PokemonAttacks, PokemonEvsAndCondition,
      PokemonMisc, TrainerName, PokemonNick, TeamAndItemsRemaining, EM_RU_SA_TEAMANDITEMS_REM_LEN,
-     FR_LG_TEAMANDITEMS_REM_LEN, TEAMANDITEMS_POKE_LEN};
+     FR_LG_TEAMANDITEMS_REM_LEN, TEAMANDITEMS_POKE_LEN, PcBuffer, PokemonStorage, N_BOXES,
+     PokemonActiveData, PokeBox};
 
 trait SectionWrite {
-    const ID: u16;
-    const CKSUM_AREA_LEN: u64;
+    fn id(&self) -> u16;
+    fn cksum_area_len(&self) -> u64;
     fn write_data<W: Write>(&self, writer: &mut W) -> io::Result<()>;
     fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
         let mut buf = Vec::new();
         self.write_data(&mut buf)?;
         // Write section id
-        buf.write_u16::<LE>(Self::ID)?;
+        buf.write_u16::<LE>(self.id())?;
         // Calculate and write checksum
         let mut cksum: u32 = 0;
         let mut reader = &buf[..];
         let mut amount_read = 0;
 
-        while amount_read < Self::CKSUM_AREA_LEN {
+        while amount_read < self.cksum_area_len() {
             cksum = cksum.wrapping_add(reader.read_u32::<LE>()?);
             amount_read += 4;
         }
@@ -86,8 +87,12 @@ impl TrainerInfo {
 }
 
 impl SectionWrite for TrainerInfo {
-    const ID: u16 = 0;
-    const CKSUM_AREA_LEN: u64 = 3884;
+    fn id(&self) -> u16 {
+        0
+    }
+    fn cksum_area_len(&self) -> u64 {
+        3884
+    }
     fn write_data<W: Write>(&self, writer: &mut W) -> io::Result<()> {
         writer.write_all(&self.name.0)?;
         writer.write_u8(self.unknown_1)?;
@@ -126,6 +131,7 @@ struct ReadSession {
     trainer_info_index: Option<usize>,
     team_and_items_index: Option<usize>,
     nonexistent: bool,
+    box_indexes: [usize; N_BOXES],
 }
 
 impl Section {
@@ -159,7 +165,7 @@ impl Section {
         let section_end_pos = reader.seek(SeekFrom::Current(0))?;
         reader.seek(SeekFrom::Start(data_pos))?;
         let data = match id {
-            TrainerInfo::ID => {
+            0 => {
                 let info = TrainerInfo::read(reader)?;
                 session.game_type = Some(GameType::from(&info.game));
                 match session.trainer_info_index {
@@ -174,7 +180,7 @@ impl Section {
                 }
                 SectionData::TrainerInfo(info)
             }
-            TeamAndItems::ID => {
+            1 => {
                 match session.team_and_items_index {
                     ref mut opt @ None => *opt = Some(session.section_index),
                     Some(idx) => {
@@ -186,6 +192,11 @@ impl Section {
                     }
                 }
                 SectionData::TeamAndItems(TeamAndItems::read(reader, session)?)
+            }
+            5...13 => {
+                let index = id as usize - 5;
+                session.box_indexes[index] = session.section_index;
+                SectionData::PcBuffer(PcBuffer::read(reader, index)?)
             }
             0xFFFF => {
                 session.nonexistent = true;
@@ -234,7 +245,86 @@ impl SectionData {
             }
             SectionData::TrainerInfo(ref info) => info.write(writer),
             SectionData::TeamAndItems(ref data) => data.write(writer),
+            SectionData::PcBuffer(ref data) => data.write(writer),
         }
+    }
+}
+
+struct PokemonStorageReader<'a> {
+    sections: &'a [Section],
+    session: &'a ReadSession,
+    read_so_far: u64,
+}
+
+impl<'a> PokemonStorageReader<'a> {
+    fn new(sections: &'a [Section], session: &'a ReadSession) -> Self {
+        PokemonStorageReader {
+            sections: sections,
+            session: session,
+            read_so_far: 0,
+        }
+    }
+}
+
+const PC_BUFFER_DATA_LEN: usize = 3968;
+
+impl<'a> Read for PokemonStorageReader<'a> {
+    fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
+        debug!("PokemonStorageReader::read called on {:?}", buf);
+        debug!("Read so far: {}", self.read_so_far);
+        let index = self.read_so_far / PC_BUFFER_DATA_LEN as u64;
+        debug!("Box section to read from is {}", index);
+        let cursor = (self.read_so_far % PC_BUFFER_DATA_LEN as u64) as usize;
+        debug!("Offset is {}", index);
+        let box_index = self.session.box_indexes[index as usize];
+        let pc_buf = if let SectionData::PcBuffer(ref buf) = self.sections[box_index].data {
+            buf
+        } else {
+            panic!("Pc Buffer session expected, got some other section.");
+        };
+        let pc_buf_data = &pc_buf.data[cursor..buf.len() + cursor];
+        debug!("PC buf data: {:?}", pc_buf_data);
+        debug!("Witebuf len is {}, src len is {}",
+               buf.len(),
+               pc_buf_data.len());
+        buf.copy_from_slice(pc_buf_data);
+        self.read_so_far += buf.len() as u64;
+        Ok(buf.len())
+    }
+}
+
+struct PokemonStorageWriter<'a> {
+    sections: &'a mut [Section],
+    written_so_far: u64,
+    box_indexes: [usize; N_BOXES],
+}
+
+impl<'a> Write for PokemonStorageWriter<'a> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        debug!("PokemonStorageWriter::write called on {:?}", buf);
+        debug!("Written so far: {}", self.written_so_far);
+        let index = self.written_so_far / PC_BUFFER_DATA_LEN as u64;
+        debug!("Box section to read from is {}", index);
+        let cursor = (self.written_so_far % PC_BUFFER_DATA_LEN as u64) as usize;
+        debug!("Offset is {}", index);
+        let box_index = self.box_indexes[index as usize];
+        let pc_buf = if let SectionData::PcBuffer(ref mut buf) = self.sections[box_index].data {
+            buf
+        } else {
+            panic!("Pc Buffer section expected, got {:?}",
+                   self.sections[box_index]);
+        };
+        let pc_buf_data = &mut pc_buf.data[cursor..buf.len() + cursor];
+        debug!("PC buf data: {:?}", pc_buf_data);
+        debug!("Witebuf len is {}, src len is {}",
+               buf.len(),
+               pc_buf_data.len());
+        pc_buf_data.copy_from_slice(buf);
+        self.written_so_far += buf.len() as u64;
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
     }
 }
 
@@ -256,24 +346,39 @@ impl SaveBlock {
                         Section::read(reader, &mut session)?,
                         Section::read(reader, &mut session)?,
                         Section::read(reader, &mut session)?];
-        let (trainer_info_index, team_and_items_index);
+        let (trainer_info_index, team_and_items_index, storage);
         if session.nonexistent {
             trainer_info_index = 0;
             team_and_items_index = 0;
+            storage = Default::default();
         } else {
             trainer_info_index = session.trainer_info_index.ok_or("Missing TrainerInfo section")?;
             team_and_items_index = session.team_and_items_index
                 .ok_or("Missing TeamAndItems section")?;
+            let mut reader = PokemonStorageReader::new(&sections, &session);
+            storage = PokemonStorage::read(&mut reader)?;
         }
         Ok((SaveBlock {
             sections: sections,
             trainer_info_index: trainer_info_index,
             team_and_items_index: team_and_items_index,
             nonexistent: session.nonexistent,
+            pokemon_storage: storage,
+            box_indexes: session.box_indexes,
         },
             session.save_index.unwrap()))
     }
-    fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+    fn write<W: Write>(&mut self, writer: &mut W) -> io::Result<()> {
+        {
+            let mut storage_writer = PokemonStorageWriter {
+                sections: &mut self.sections,
+                written_so_far: 0,
+                box_indexes: self.box_indexes,
+            };
+            if !self.nonexistent {
+                self.pokemon_storage.write(&mut storage_writer)?;
+            }
+        }
         for sec in &self.sections {
             sec.write(writer)?;
         }
@@ -305,8 +410,8 @@ impl Save {
         })
     }
     /// Write the save data to a `Write` implementer.
-    pub fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-        for block in &self.blocks {
+    pub fn write<W: Write>(&mut self, writer: &mut W) -> io::Result<()> {
+        for block in &mut self.blocks {
             block.write(writer)?
         }
         writer.write_all(&self.unknown)
@@ -387,8 +492,12 @@ impl TeamAndItems {
 }
 
 impl SectionWrite for TeamAndItems {
-    const ID: u16 = 1;
-    const CKSUM_AREA_LEN: u64 = 3968;
+    fn id(&self) -> u16 {
+        1
+    }
+    fn cksum_area_len(&self) -> u64 {
+        3968
+    }
     fn write_data<W: Write>(&self, writer: &mut W) -> io::Result<()> {
         self.unknown.write(writer)?;
         writer.write_u32::<LE>(self.team.len() as u32)?;
@@ -453,7 +562,7 @@ impl TeamAndItemsRemaining {
 }
 
 impl Pokemon {
-    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
+    fn read_non_active<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
         let personality_value = reader.read_u32::<LE>()?;
         let ot_id = reader.read_u32::<LE>()?;
         let mut nick = [0; POKEMON_NICK_LEN];
@@ -470,16 +579,6 @@ impl Pokemon {
                rgen3_string::decode_string(&nick),
                rgen3_string::decode_string(&ot_name));
         let data = PokemonData::read(reader, personality_value, ot_id)?;
-        let status_condition = reader.read_u32::<LE>()?;
-        let level = reader.read_u8()?;
-        let pokerus_remaining = reader.read_u8()?;
-        let current_hp = reader.read_u16::<LE>()?;
-        let total_hp = reader.read_u16::<LE>()?;
-        let attack = reader.read_u16::<LE>()?;
-        let defense = reader.read_u16::<LE>()?;
-        let speed = reader.read_u16::<LE>()?;
-        let sp_attack = reader.read_u16::<LE>()?;
-        let sp_defense = reader.read_u16::<LE>()?;
         Ok(Pokemon {
             personality: personality_value,
             ot_id: ot_id,
@@ -490,19 +589,15 @@ impl Pokemon {
             checksum: checksum,
             unknown_1: unknown_1,
             data: data,
-            status_condition: status_condition,
-            level: level,
-            pokerus_remaining: pokerus_remaining,
-            current_hp: current_hp,
-            total_hp: total_hp,
-            attack: attack,
-            defense: defense,
-            speed: speed,
-            sp_attack: sp_attack,
-            sp_defense: sp_defense,
+            active_data: None,
         })
     }
-    fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
+        let mut pokemon = Self::read_non_active(reader)?;
+        pokemon.active_data = Some(PokemonActiveData::read(reader)?);
+        Ok(pokemon)
+    }
+    fn write_non_active<W: Write>(&self, writer: &mut W) -> io::Result<()> {
         debug!("Writing data for Pokemon {:?}", self.nickname);
         writer.write_u32::<LE>(self.personality)?;
         writer.write_u32::<LE>(self.ot_id)?;
@@ -521,17 +616,14 @@ impl Pokemon {
         debug!("Writing unknown 1 of value {}", self.unknown_1);
         writer.write_u16::<LE>(self.unknown_1)?;
         self.encrypt_data(&mut data_buf);
-        writer.write_all(&data_buf)?;
-        writer.write_u32::<LE>(self.status_condition)?;
-        writer.write_u8(self.level)?;
-        writer.write_u8(self.pokerus_remaining)?;
-        writer.write_u16::<LE>(self.current_hp)?;
-        writer.write_u16::<LE>(self.total_hp)?;
-        writer.write_u16::<LE>(self.attack)?;
-        writer.write_u16::<LE>(self.defense)?;
-        writer.write_u16::<LE>(self.speed)?;
-        writer.write_u16::<LE>(self.sp_attack)?;
-        writer.write_u16::<LE>(self.sp_defense)
+        writer.write_all(&data_buf)
+    }
+    fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+        self.write_non_active(writer)?;
+        let active_data = self.active_data
+            .as_ref()
+            .expect("Requested full write on pokemon not having active data");
+        active_data.write(writer)
     }
     fn calc_data_checksum(mut data: &[u8]) -> io::Result<u16> {
         let mut accum: u16 = 0;
@@ -772,5 +864,125 @@ impl PokemonMisc {
         writer.write_u16::<LE>(self.origins_info)?;
         writer.write_u32::<LE>(self.ivs_eggs_and_ability)?;
         writer.write_u32::<LE>(self.ribbons_and_obedience)
+    }
+}
+
+impl PokemonActiveData {
+    fn read<R: Read>(reader: &mut R) -> io::Result<Self> {
+        Ok(PokemonActiveData {
+            status_condition: reader.read_u32::<LE>()?,
+            level: reader.read_u8()?,
+            pokerus_remaining: reader.read_u8()?,
+            current_hp: reader.read_u16::<LE>()?,
+            total_hp: reader.read_u16::<LE>()?,
+            attack: reader.read_u16::<LE>()?,
+            defense: reader.read_u16::<LE>()?,
+            speed: reader.read_u16::<LE>()?,
+            sp_attack: reader.read_u16::<LE>()?,
+            sp_defense: reader.read_u16::<LE>()?,
+        })
+    }
+    fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+        writer.write_u32::<LE>(self.status_condition)?;
+        writer.write_u8(self.level)?;
+        writer.write_u8(self.pokerus_remaining)?;
+        writer.write_u16::<LE>(self.current_hp)?;
+        writer.write_u16::<LE>(self.total_hp)?;
+        writer.write_u16::<LE>(self.attack)?;
+        writer.write_u16::<LE>(self.defense)?;
+        writer.write_u16::<LE>(self.speed)?;
+        writer.write_u16::<LE>(self.sp_attack)?;
+        writer.write_u16::<LE>(self.sp_defense)
+    }
+}
+
+impl PcBuffer {
+    fn read<R: Read>(reader: &mut R, index: usize) -> Result<Self, Box<Error>> {
+        let mut data = [0u8; DATA_SIZE as usize];
+        reader.read_exact(&mut data)?;
+        Ok(PcBuffer {
+            data: data,
+            index: index,
+        })
+    }
+}
+
+impl SectionWrite for PcBuffer {
+    fn id(&self) -> u16 {
+        self.index as u16 + 5
+    }
+    fn cksum_area_len(&self) -> u64 {
+        if self.id() == 13 { 2000 } else { 3968 }
+    }
+    fn write_data<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+        writer.write_all(&self.data)
+    }
+}
+
+impl PokemonStorage {
+    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
+        let current_box = reader.read_u32::<LE>()?;
+        debug!("Current box: {}", current_box);
+        let mut boxes = [PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?,
+                         PokeBox::read(reader)?];
+        for b in &mut boxes {
+            reader.read_exact(&mut b.name.0)?;
+        }
+        for b in &mut boxes {
+            b.wallpaper = reader.read_u8()?;
+        }
+        Ok(PokemonStorage {
+            current_box: current_box as usize,
+            boxes: boxes,
+        })
+    }
+    fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+        writer.write_u32::<LE>(self.current_box as u32)?;
+        for b in &self.boxes {
+            b.write(writer)?;
+        }
+        for b in &self.boxes {
+            writer.write_all(&b.name.0)?;
+        }
+        for b in &self.boxes {
+            writer.write_u8(b.wallpaper)?;
+        }
+        Ok(())
+    }
+}
+
+impl PokeBox {
+    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
+        let mut poke_box = PokeBox::default();
+        for opt_pokemon in &mut poke_box.pokemon {
+            let mut data = [0; 80];
+            reader.read_exact(&mut data)?;
+            // If the entire data is zero bytes, then the slot is empty
+            if !data.iter().all(|&v| v == 0) {
+                *opt_pokemon = Some(Pokemon::read_non_active(&mut &data[..])?);
+            }
+        }
+        Ok(poke_box)
+    }
+    fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+        for opt_pokemon in &self.pokemon {
+            match *opt_pokemon {
+                Some(ref pokemon) => pokemon.write_non_active(writer)?,
+                None => writer.write_all(&[0; 80])?,
+            }
+        }
+        Ok(())
     }
 }
