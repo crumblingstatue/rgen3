@@ -51,21 +51,6 @@ impl<'a> PokeGen<'a> {
         rgen3_string::encode_string(&name, &mut pokemon.nickname.0);
         self.chosen_names.insert(name);
         {
-            if pokemon.active_data.is_none() {
-                pokemon.active_data = Some(Default::default());
-            }
-            {
-                let active_data = pokemon.active_data.as_mut().unwrap();
-                pokemon.personality = self.rng.gen();
-                active_data.level = self.rng.gen_range(80, 100);
-                active_data.total_hp = self.rng.gen_range(800, 999);
-                active_data.current_hp = active_data.total_hp;
-                active_data.attack = self.rng.gen_range(800, 999);
-                active_data.defense = self.rng.gen_range(800, 999);
-                active_data.speed = self.rng.gen_range(800, 999);
-                active_data.sp_attack = self.rng.gen_range(800, 999);
-                active_data.sp_defense = self.rng.gen_range(800, 999);
-            }
             loop {
                 let species = self.rng.gen_range(1, 412);
                 let result = pokemon.set_species(species);
@@ -115,12 +100,8 @@ fn main() {
     let path = args.next().expect("Need path to save as first arg");
     let mut save = rgen3_save::Save::load_from_file(&path).unwrap();
     {
-        let SaveSections { trainer, team, pc_boxes } = save.sections();
+        let SaveSections { trainer, pc_boxes, .. } = save.sections();
         let mut generator = PokeGen::new(trainer);
-        team.clear();
-        for _ in 0..6 {
-            team.push(generator.gen());
-        }
         for b in pc_boxes.iter_mut() {
             for p in &mut b.pokemon {
                 *p = Some(generator.gen());
