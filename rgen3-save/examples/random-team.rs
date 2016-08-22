@@ -29,7 +29,7 @@ fn gen_pokemon<R: Rng>(rng: &mut R,
         let suffix = rng.choose(&SUFFIX_NAMES).unwrap();
         name = format!("{} {}", prefix, suffix);
         // Make sure we don't use the same name twice in our team
-        if chosen_names.get(&name).is_none() {
+        if !chosen_names.contains(&name) {
             break;
         }
     }
