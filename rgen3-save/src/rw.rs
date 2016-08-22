@@ -806,12 +806,12 @@ impl PokemonEvsAndCondition {
         let data = read_and_decrypt(reader, dec_key)?;
         let mut reader = &data[..];
         Ok(PokemonEvsAndCondition {
-            hp_ev: reader.read_u8()?,
-            attack_ev: reader.read_u8()?,
-            defense_ev: reader.read_u8()?,
-            speed_ev: reader.read_u8()?,
-            special_attack_ev: reader.read_u8()?,
-            special_defense_ev: reader.read_u8()?,
+            hp: reader.read_u8()?,
+            attack: reader.read_u8()?,
+            defense: reader.read_u8()?,
+            speed: reader.read_u8()?,
+            sp_attack: reader.read_u8()?,
+            sp_defense: reader.read_u8()?,
             coolness: reader.read_u8()?,
             beauty: reader.read_u8()?,
             cuteness: reader.read_u8()?,
@@ -821,12 +821,12 @@ impl PokemonEvsAndCondition {
         })
     }
     fn write_unencrypted<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-        writer.write_u8(self.hp_ev)?;
-        writer.write_u8(self.attack_ev)?;
-        writer.write_u8(self.defense_ev)?;
-        writer.write_u8(self.speed_ev)?;
-        writer.write_u8(self.special_attack_ev)?;
-        writer.write_u8(self.special_defense_ev)?;
+        writer.write_u8(self.hp)?;
+        writer.write_u8(self.attack)?;
+        writer.write_u8(self.defense)?;
+        writer.write_u8(self.speed)?;
+        writer.write_u8(self.sp_attack)?;
+        writer.write_u8(self.sp_defense)?;
         writer.write_u8(self.coolness)?;
         writer.write_u8(self.beauty)?;
         writer.write_u8(self.cuteness)?;

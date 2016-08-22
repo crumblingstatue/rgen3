@@ -303,6 +303,20 @@ pub struct Pokemon {
     pub active_data: Option<PokemonActiveData>,
 }
 
+pub struct InvalidSpecies;
+
+impl Pokemon {
+    pub fn set_species(&mut self, num: u16) -> Result<(), InvalidSpecies> {
+        match num {
+            1...251 | 277...411 => {
+                self.data.growth.species = num;
+                Ok(())
+            }
+            _ => Err(InvalidSpecies)
+        }
+    }
+}
+
 /// "Active" data that is not stored in the PC boxes.
 #[derive(Debug, Default)]
 pub struct PokemonActiveData {
@@ -322,7 +336,7 @@ pub struct PokemonActiveData {
 pub struct PokemonData {
     pub growth: PokemonGrowth,
     pub attacks: PokemonAttacks,
-    evs_and_condition: PokemonEvsAndCondition,
+    pub evs_and_condition: PokemonEvsAndCondition,
     misc: PokemonMisc,
 }
 
@@ -331,8 +345,8 @@ pub struct PokemonGrowth {
     pub species: u16,
     item_held: u16,
     pub experience: u32,
-    pp_bonuses: u8,
-    friendship: u8,
+    pub pp_bonuses: u8,
+    pub friendship: u8,
     unknown: u16,
 }
 
@@ -349,19 +363,19 @@ pub struct PokemonAttacks {
 }
 
 #[derive(Debug, Default)]
-struct PokemonEvsAndCondition {
-    hp_ev: u8,
-    attack_ev: u8,
-    defense_ev: u8,
-    speed_ev: u8,
-    special_attack_ev: u8,
-    special_defense_ev: u8,
-    coolness: u8,
-    beauty: u8,
-    cuteness: u8,
-    smartness: u8,
-    toughness: u8,
-    feel: u8,
+pub struct PokemonEvsAndCondition {
+    pub hp: u8,
+    pub attack: u8,
+    pub defense: u8,
+    pub speed: u8,
+    pub sp_attack: u8,
+    pub sp_defense: u8,
+    pub coolness: u8,
+    pub beauty: u8,
+    pub cuteness: u8,
+    pub smartness: u8,
+    pub toughness: u8,
+    pub feel: u8,
 }
 
 #[derive(Debug, Default)]

@@ -39,18 +39,22 @@ fn gen_pokemon<R: Rng>(rng: &mut R,
         if pokemon.active_data.is_none() {
             pokemon.active_data = Some(Default::default());
         }
-        let active_data = pokemon.active_data.as_mut().unwrap();
-        pokemon.personality = rng.gen();
-        active_data.level = rng.gen_range(80, 100);
-        active_data.total_hp = rng.gen_range(800, 999);
-        active_data.current_hp = active_data.total_hp;
-        active_data.attack = rng.gen_range(800, 999);
-        active_data.defense = rng.gen_range(800, 999);
-        active_data.speed = rng.gen_range(800, 999);
-        active_data.sp_attack = rng.gen_range(800, 999);
-        active_data.sp_defense = rng.gen_range(800, 999);
-        pokemon.data.growth.species = rng.gen_range(0, 386);
+        {
+            let active_data = pokemon.active_data.as_mut().unwrap();
+            pokemon.personality = rng.gen();
+            active_data.level = rng.gen_range(80, 100);
+            active_data.total_hp = rng.gen_range(800, 999);
+            active_data.current_hp = active_data.total_hp;
+            active_data.attack = rng.gen_range(800, 999);
+            active_data.defense = rng.gen_range(800, 999);
+            active_data.speed = rng.gen_range(800, 999);
+            active_data.sp_attack = rng.gen_range(800, 999);
+            active_data.sp_defense = rng.gen_range(800, 999);
+        }
+        while pokemon.set_species(rng.gen_range(1, 412)).is_err() {}
         pokemon.data.growth.experience = std::u32::MAX / 2;
+        pokemon.data.growth.friendship = 0xFF;
+        pokemon.data.growth.pp_bonuses = 0xFF;
         pokemon.data.attacks.move1 = rng.gen_range(0, 354);
         pokemon.data.attacks.move2 = rng.gen_range(0, 354);
         pokemon.data.attacks.move3 = rng.gen_range(0, 354);
@@ -59,6 +63,17 @@ fn gen_pokemon<R: Rng>(rng: &mut R,
         pokemon.data.attacks.pp2 = 99;
         pokemon.data.attacks.pp3 = 99;
         pokemon.data.attacks.pp4 = 99;
+        pokemon.data.evs_and_condition.hp = 0xFF;
+        pokemon.data.evs_and_condition.attack = 0xFF;
+        pokemon.data.evs_and_condition.defense = 0xFF;
+        pokemon.data.evs_and_condition.speed = 0xFF;
+        pokemon.data.evs_and_condition.sp_attack = 0xFF;
+        pokemon.data.evs_and_condition.sp_defense = 0xFF;
+        pokemon.data.evs_and_condition.coolness = 0xFF;
+        pokemon.data.evs_and_condition.beauty = 0xFF;
+        pokemon.data.evs_and_condition.cuteness = 0xFF;
+        pokemon.data.evs_and_condition.smartness = 0xFF;
+        pokemon.data.evs_and_condition.toughness = 0xFF;
         pokemon.ot_id = trainer.full_id();
         pokemon.ot_name = trainer.name;
     }
