@@ -52,7 +52,7 @@ fn gen_pokemon<R: Rng>(rng: &mut R,
             active_data.sp_defense = rng.gen_range(800, 999);
         }
         while pokemon.set_species(rng.gen_range(1, 412)).is_err() {}
-        pokemon.data.growth.experience = std::u32::MAX / 2;
+        pokemon.data.growth.experience = 1_640_000;
         pokemon.data.growth.friendship = 0xFF;
         pokemon.data.growth.pp_bonuses = 0xFF;
         pokemon.data.attacks.move1 = rng.gen_range(0, 354);
