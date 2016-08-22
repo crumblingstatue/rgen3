@@ -332,20 +332,10 @@ impl SaveBlock {
     fn read<R: Read + Seek>(reader: &mut R) -> Result<(Self, u32), Box<Error>> {
         debug!("== Reading save block ==");
         let mut session = ReadSession::default();
-        let sections = [Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?,
-                        Section::read(reader, &mut session)?];
+        let mut sections = Vec::new();
+        for _ in 0..14 {
+            sections.push(Section::read(reader, &mut session)?);
+        }
         let (trainer_info_index, team_and_items_index, storage);
         if session.nonexistent {
             trainer_info_index = 0;
@@ -923,20 +913,10 @@ impl PokemonStorage {
     fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
         let current_box = reader.read_u32::<LE>()?;
         debug!("Current box: {}", current_box);
-        let mut boxes = [PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?,
-                         PokeBox::read(reader)?];
+        let mut boxes = Vec::new();
+        for _ in 0..14 {
+            boxes.push(PokeBox::read(reader)?);
+        }
         for b in &mut boxes {
             reader.read_exact(&mut b.name.0)?;
         }

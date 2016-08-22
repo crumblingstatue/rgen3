@@ -47,14 +47,15 @@ impl Save {
     }
     pub fn sections(&mut self) -> SaveSections {
         let block = &mut self.blocks[self.most_recent_index];
+        let sections = &mut block.sections[..];
         let team_and_items = if let SectionData::TeamAndItems(ref mut data) =
-                                    block.sections[block.team_and_items_index].data {
+                                    sections[block.team_and_items_index].data {
             data
         } else {
             panic!("Unexpected section data. Expected TeamAndItems");
         };
         let trainer_info = if let SectionData::TrainerInfo(ref mut data) =
-                                  block.sections[block.trainer_info_index].data {
+                                  sections[block.trainer_info_index].data {
             data
         } else {
             panic!("Unexpected section data. Expected TrainerInfo");
@@ -75,7 +76,7 @@ pub struct SaveSections<'a> {
 
 #[derive(Debug)]
 struct SaveBlock {
-    sections: [Section; 14],
+    sections: Vec<Section>,
     trainer_info_index: usize,
     team_and_items_index: usize,
     // Does not exist yet, meaning the game has only been saved once, and this
@@ -388,7 +389,7 @@ const N_BOXES: usize = 14;
 #[derive(Default)]
 pub struct PokemonStorage {
     current_box: usize,
-    boxes: [PokeBox; N_BOXES],
+    boxes: Vec<PokeBox>,
 }
 
 impl fmt::Debug for PokemonStorage {
