@@ -303,6 +303,7 @@ pub struct Pokemon {
     pub active_data: Option<PokemonActiveData>,
 }
 
+#[derive(Debug)]
 pub struct InvalidSpecies;
 
 impl Pokemon {
@@ -312,7 +313,7 @@ impl Pokemon {
                 self.data.growth.species = num;
                 Ok(())
             }
-            _ => Err(InvalidSpecies)
+            _ => Err(InvalidSpecies),
         }
     }
 }
