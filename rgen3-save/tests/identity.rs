@@ -6,6 +6,19 @@ use std::io::prelude::*;
 use std::io::Cursor;
 use std::fs::File;
 
+fn cmp(a: &[u8], b: &[u8]) {
+    assert_eq!(a.len(), b.len());
+    for (i, (&b1, &b2)) in a.iter().zip(b).enumerate() {
+        if b1 != b2 {
+            panic!("Mismatch: {} (orig) vs {} (new) @ {} (0x{:X})",
+                   b1,
+                   b2,
+                   i,
+                   i);
+        }
+    }
+}
+
 #[test]
 fn identity() {
     env_logger::init().unwrap();
@@ -24,14 +37,6 @@ fn identity() {
             let mut writer = &mut writeout[..];
             save.write(&mut writer).unwrap();
         }
-        for (i, (&b1, &b2)) in data.iter().zip(&writeout[..]).enumerate() {
-            if b1 != b2 {
-                panic!("Mismatch: {} (orig) vs {} (new) @ {} (0x{:X})",
-                    b1,
-                    b2,
-                    i,
-                    i);
-            }
-        }
+        cmp(&data, &writeout);
     }
 }
