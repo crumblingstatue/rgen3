@@ -68,7 +68,12 @@ pub fn decode_byte(value: u8) -> PokeChar {
 }
 
 pub fn decode_string(poke: &[u8]) -> String {
-    poke.iter().cloned().map(decode_byte).map(PokeChar::to_char).collect()
+    poke.iter()
+        .cloned()
+        .map(decode_byte)
+        .take_while(|&pc| pc != PokeChar::Term)
+        .map(PokeChar::to_char)
+        .collect()
 }
 
 pub fn encode_string(src: &str, dst: &mut [u8]) {
@@ -81,4 +86,10 @@ pub fn encode_string(src: &str, dst: &mut [u8]) {
     while let Some(b) = dst_bytes.next() {
         *b = 0xFF;
     }
+}
+
+#[test]
+fn test_decode_string() {
+    assert_eq!(decode_string(&[0xC2, 0xD9, 0xE0, 0xE0, 0xE3, 0xFF]),
+               "Hello");
 }
