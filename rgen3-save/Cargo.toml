@@ -5,6 +5,7 @@ authors = ["Mika Attila <radiantstatue@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/crumblingstatue/rgen3"
 description = "Manipulate Generation 3 Pokémon save files"
+keywords = ["pokemon", "save"]
 
 [dependencies]
 log = "0.3"
