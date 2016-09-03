@@ -959,7 +959,14 @@ impl PokeBox {
     fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
         for opt_pokemon in &self.pokemon {
             match *opt_pokemon {
-                Some(ref pokemon) => pokemon.write_non_active(writer)?,
+                Some(ref pokemon) => {
+                    let mut buf = [0; 80];
+                    {
+                        let mut writer = &mut buf[..];
+                        pokemon.write_non_active(&mut writer)?;
+                    }
+                    writer.write_all(&buf)?
+                }
                 None => writer.write_all(&[0; 80])?,
             }
         }
