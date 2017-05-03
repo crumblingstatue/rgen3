@@ -1,7 +1,5 @@
 //! Library for manipulating Pokémon Gen3 (Fire Red/Leaf Green, Ruby/Emerald/Sapphire) save data.
 
-#![feature(question_mark)]
-
 #[macro_use]
 extern crate log;
 extern crate byteorder;
