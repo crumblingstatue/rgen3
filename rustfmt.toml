@@ -1,2 +1,2 @@
-write-mode = "overwrite"
-use-try-shorthand = true
+write_mode = "overwrite"
+use_try_shorthand = true
