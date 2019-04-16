@@ -14,10 +14,10 @@ static PREFIX_NAMES: [&'static str; 52] = [
     "Xray", "Yoga", "Zeta", "Zoom",
 ];
 
-static SUFFIX_NAMES: [&'static str; 24] = [
+static SUFFIX_NAMES: [&'static str; 23] = [
     "Adder", "Baker", "Biter", "Coder", "Curer", "Diver", "Eater", "Faker", "Flier", "Frier",
     "Gamer", "Gazer", "Giver", "Laser", "Lover", "Maker", "Order", "Racer", "Taker", "Tamer",
-    "Voter", "Waker", "Zoner", "Hugger",
+    "Voter", "Waker", "Zoner",
 ];
 
 struct PokeGen<'a> {
