@@ -1,22 +1,24 @@
+extern crate rand;
 extern crate rgen3_save;
 extern crate rgen3_string;
-extern crate rand;
 
-use rand::{Rng, thread_rng, ThreadRng};
+use rand::{thread_rng, Rng, ThreadRng};
 use rgen3_save::{Pokemon, SaveSections, TrainerInfo};
 use std::collections::HashSet;
 
-static PREFIX_NAMES: [&'static str; 52] =
-    ["Acid", "Axel", "Baal", "Bike", "Bull", "Bald", "Cave", "Diet", "Dray", "Duke", "Easy",
-     "Fact", "Face", "Fowl", "Fuzz", "Goat", "Hair", "Head", "Hiss", "Idea", "Iris", "Iron",
-     "Jack", "John", "Kart", "Lady", "Limb", "Lime", "Mace", "Mars", "Naga", "Nuke", "Nude",
-     "Omen", "Orca", "Poke", "Pyre", "Quiz", "Risk", "Road", "Sock", "Swag", "Teal", "Tree",
-     "Ugly", "Vamp", "Vibe", "Wolf", "Xray", "Yoga", "Zeta", "Zoom"];
+static PREFIX_NAMES: [&'static str; 52] = [
+    "Acid", "Axel", "Baal", "Bike", "Bull", "Bald", "Cave", "Diet", "Dray", "Duke", "Easy", "Fact",
+    "Face", "Fowl", "Fuzz", "Goat", "Hair", "Head", "Hiss", "Idea", "Iris", "Iron", "Jack", "John",
+    "Kart", "Lady", "Limb", "Lime", "Mace", "Mars", "Naga", "Nuke", "Nude", "Omen", "Orca", "Poke",
+    "Pyre", "Quiz", "Risk", "Road", "Sock", "Swag", "Teal", "Tree", "Ugly", "Vamp", "Vibe", "Wolf",
+    "Xray", "Yoga", "Zeta", "Zoom",
+];
 
-static SUFFIX_NAMES: [&'static str; 23] = ["Adder", "Baker", "Biter", "Coder", "Curer", "Diver",
-                                           "Eater", "Faker", "Flier", "Frier", "Gamer", "Gazer",
-                                           "Giver", "Laser", "Lover", "Maker", "Order", "Racer",
-                                           "Taker", "Tamer", "Voter", "Waker", "Zoner"];
+static SUFFIX_NAMES: [&'static str; 23] = [
+    "Adder", "Baker", "Biter", "Coder", "Curer", "Diver", "Eater", "Faker", "Flier", "Frier",
+    "Gamer", "Gazer", "Giver", "Laser", "Lover", "Maker", "Order", "Racer", "Taker", "Tamer",
+    "Voter", "Waker", "Zoner",
+];
 
 struct PokeGen<'a> {
     chosen_names: HashSet<String>,
@@ -100,7 +102,9 @@ fn main() {
     let path = args.next().expect("Need path to save as first arg");
     let mut save = rgen3_save::Save::load_from_file(&path).unwrap();
     {
-        let SaveSections { trainer, pc_boxes, .. } = save.sections();
+        let SaveSections {
+            trainer, pc_boxes, ..
+        } = save.sections();
         let mut generator = PokeGen::new(trainer);
         for b in pc_boxes.iter_mut() {
             for p in &mut b.pokemon {

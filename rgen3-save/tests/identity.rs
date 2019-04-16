@@ -1,10 +1,10 @@
-extern crate rgen3_save;
 extern crate env_logger;
+extern crate rgen3_save;
 
-use rgen3_save::{Save, SaveSections, Pokemon};
+use rgen3_save::{Pokemon, Save, SaveSections};
+use std::fs::File;
 use std::io::prelude::*;
 use std::io::Cursor;
-use std::fs::File;
 
 const SAVE_LEN: usize = 131072;
 
@@ -12,19 +12,18 @@ fn cmp(orig: &[u8], new: &[u8]) {
     assert_eq!(orig.len(), new.len());
     for (i, (&b1, &b2)) in orig.iter().zip(new).enumerate() {
         if b1 != b2 {
-            panic!("Mismatch: {} (orig) vs {} (new) @ {} (0x{:X})",
-                   b1,
-                   b2,
-                   i,
-                   i);
+            panic!(
+                "Mismatch: {} (orig) vs {} (new) @ {} (0x{:X})",
+                b1, b2, i, i
+            );
         }
     }
 }
 
 fn run_test<F: Fn(&[u8], Save)>(test: F) {
     let _ = env_logger::init();
-    let paths = std::env::var("RGEN3_TEST_SAVES")
-        .expect("Need RGEN3_TEST_SAVES env var set to a path");
+    let paths =
+        std::env::var("RGEN3_TEST_SAVES").expect("Need RGEN3_TEST_SAVES env var set to a path");
     let paths = paths.split(';');
     for path in paths {
         let mut file = File::open(path).unwrap();

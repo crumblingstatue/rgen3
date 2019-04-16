@@ -11,10 +11,10 @@ mod util {
 }
 mod rw;
 
-use std::{io, fmt};
-use std::fs::File;
 use std::error::Error;
+use std::fs::File;
 use std::path::Path;
+use std::{fmt, io};
 use util::LowerUpper;
 
 const UNKNOWN_SAVE_FOOTER_SIZE: usize = 16384;
@@ -47,13 +47,15 @@ impl Save {
         let block = &mut self.blocks[self.most_recent_index];
         let sections = &mut block.sections[..];
         let team_and_items = if let SectionData::TeamAndItems(ref mut data) =
-                                    sections[block.team_and_items_index].data {
+            sections[block.team_and_items_index].data
+        {
             data
         } else {
             panic!("Unexpected section data. Expected TeamAndItems");
         };
         let trainer_info = if let SectionData::TrainerInfo(ref mut data) =
-                                  sections[block.trainer_info_index].data {
+            sections[block.trainer_info_index].data
+        {
             data
         } else {
             panic!("Unexpected section data. Expected TrainerInfo");
@@ -146,7 +148,9 @@ const FRLG_PLAYERINFO_UNKNOWN_CHUNK_SIZE: usize = 0x0AF8 - (0x00AC + 4);
 const FRLG_PLAYERINFO_TRAILING_DATA_SIZE: usize = DATA_SIZE as usize - (0x0AF8 + 4);
 
 enum Game {
-    RubyOrSapphire { trailing_data: [u8; RS_EM_PLAYERINFO_TRAILING_DATA_SIZE], },
+    RubyOrSapphire {
+        trailing_data: [u8; RS_EM_PLAYERINFO_TRAILING_DATA_SIZE],
+    },
     FireredOrLeafgreen {
         unknown: [u8; FRLG_PLAYERINFO_UNKNOWN_CHUNK_SIZE],
         security_key: u32,
@@ -215,11 +219,13 @@ impl fmt::Debug for TrainerInfo {
         f.write_str("== Trainer Info ==\n")?;
         writeln!(f, "name: {:?}", self.name)?;
         writeln!(f, "gender: {:?}", self.gender)?;
-        writeln!(f,
-                 "id: public({:?}) secret({:?}) combined({:?})",
-                 self.public_id,
-                 self.secret_id,
-                 u32::merge(self.public_id, self.secret_id))?;
+        writeln!(
+            f,
+            "id: public({:?}) secret({:?}) combined({:?})",
+            self.public_id,
+            self.secret_id,
+            u32::merge(self.public_id, self.secret_id)
+        )?;
         writeln!(f, "Time played: {:?}", self.time_played)?;
         writeln!(f, "GAME ID: {:?}", self.game)
     }
@@ -230,8 +236,8 @@ const FR_LG_TEAMANDITEMS_UNK_LEN: usize = 0x0034;
 const TEAMANDITEMS_POKE_LEN: usize = 600;
 const EM_RU_SA_TEAMANDITEMS_REM_LEN: usize =
     DATA_SIZE as usize - (EM_RU_SA_TEAMANDITEMS_UNK_LEN + TEAMANDITEMS_POKE_LEN + 4);
-const FR_LG_TEAMANDITEMS_REM_LEN: usize = DATA_SIZE as usize -
-                                          (FR_LG_TEAMANDITEMS_UNK_LEN + TEAMANDITEMS_POKE_LEN + 4);
+const FR_LG_TEAMANDITEMS_REM_LEN: usize =
+    DATA_SIZE as usize - (FR_LG_TEAMANDITEMS_UNK_LEN + TEAMANDITEMS_POKE_LEN + 4);
 
 enum TeamAndItemsUnknown {
     EmeraldOrRubyOrSapphire([u8; EM_RU_SA_TEAMANDITEMS_UNK_LEN]),
@@ -278,7 +284,7 @@ macro_rules! debug_impl {
                 write!(f, "{}", rgen3_string::decode_string(&self.0[..]))
             }
         }
-    }
+    };
 }
 
 debug_impl!(PokemonNick);
@@ -331,7 +337,7 @@ pub struct PokemonActiveData {
     pub sp_defense: u16,
 }
 
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 pub struct PokemonData {
     pub growth: PokemonGrowth,
     pub attacks: PokemonAttacks,
@@ -339,7 +345,7 @@ pub struct PokemonData {
     misc: PokemonMisc,
 }
 
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 pub struct PokemonGrowth {
     pub species: u16,
     item_held: u16,
@@ -417,7 +423,7 @@ impl fmt::Debug for PokemonStorage {
 
 const N_POKEMON_PER_BOX: usize = 30;
 
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 pub struct PokeBox {
     name: BoxName,
     wallpaper: u8,

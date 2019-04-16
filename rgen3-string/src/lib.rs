@@ -90,6 +90,8 @@ pub fn encode_string(src: &str, dst: &mut [u8]) {
 
 #[test]
 fn test_decode_string() {
-    assert_eq!(decode_string(&[0xC2, 0xD9, 0xE0, 0xE0, 0xE3, 0xFF]),
-               "Hello");
+    assert_eq!(
+        decode_string(&[0xC2, 0xD9, 0xE0, 0xE0, 0xE3, 0xFF]),
+        "Hello"
+    );
 }

@@ -1,17 +1,18 @@
-use std::io::prelude::*;
-use std::io::{self, SeekFrom};
 use byteorder::{LittleEndian as LE, ReadBytesExt, WriteBytesExt};
 use std::error::Error;
+use std::io::prelude::*;
+use std::io::{self, SeekFrom};
 use util::LowerUpper;
-use {TrainerInfo, DATA_SIZE, rgen3_string, Time, Section, SectionData, SaveBlock, Save, Gender,
-     UNKNOWN_SAVE_FOOTER_SIZE, TRAINER_INFO_UNKNOWN_3_SIZE, Game,
-     RS_EM_PLAYERINFO_TRAILING_DATA_SIZE, FRLG_PLAYERINFO_TRAILING_DATA_SIZE,
-     FRLG_PLAYERINFO_UNKNOWN_CHUNK_SIZE, TeamAndItems, GameType, TeamAndItemsUnknown,
-     EM_RU_SA_TEAMANDITEMS_UNK_LEN, FR_LG_TEAMANDITEMS_UNK_LEN, Pokemon, POKEMON_NICK_LEN,
-     TRAINER_NAME_LEN, PokemonData, PokemonGrowth, PokemonAttacks, PokemonEvsAndCondition,
-     PokemonMisc, TrainerName, PokemonNick, TeamAndItemsRemaining, EM_RU_SA_TEAMANDITEMS_REM_LEN,
-     FR_LG_TEAMANDITEMS_REM_LEN, TEAMANDITEMS_POKE_LEN, PcBuffer, PokemonStorage, N_BOXES,
-     PokemonActiveData, PokeBox};
+use {
+    rgen3_string, Game, GameType, Gender, PcBuffer, PokeBox, Pokemon, PokemonActiveData,
+    PokemonAttacks, PokemonData, PokemonEvsAndCondition, PokemonGrowth, PokemonMisc, PokemonNick,
+    PokemonStorage, Save, SaveBlock, Section, SectionData, TeamAndItems, TeamAndItemsRemaining,
+    TeamAndItemsUnknown, Time, TrainerInfo, TrainerName, DATA_SIZE, EM_RU_SA_TEAMANDITEMS_REM_LEN,
+    EM_RU_SA_TEAMANDITEMS_UNK_LEN, FRLG_PLAYERINFO_TRAILING_DATA_SIZE,
+    FRLG_PLAYERINFO_UNKNOWN_CHUNK_SIZE, FR_LG_TEAMANDITEMS_REM_LEN, FR_LG_TEAMANDITEMS_UNK_LEN,
+    N_BOXES, POKEMON_NICK_LEN, RS_EM_PLAYERINFO_TRAILING_DATA_SIZE, TEAMANDITEMS_POKE_LEN,
+    TRAINER_INFO_UNKNOWN_3_SIZE, TRAINER_NAME_LEN, UNKNOWN_SAVE_FOOTER_SIZE,
+};
 
 trait SectionWrite {
     fn id(&self) -> u16;
@@ -43,8 +44,10 @@ impl TrainerInfo {
     fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
         let mut name_buffer = [0u8; 7];
         reader.read_exact(&mut name_buffer)?;
-        debug!("Trainer name is {}",
-               rgen3_string::decode_string(&name_buffer));
+        debug!(
+            "Trainer name is {}",
+            rgen3_string::decode_string(&name_buffer)
+        );
         let unknown_1 = reader.read_u8()?;
         let gender = match reader.read_u8()? {
             0 => Gender::Male,
@@ -55,16 +58,15 @@ impl TrainerInfo {
         let unknown_2 = reader.read_u8()?;
         let id = reader.read_u32::<LE>()?;
         let (public_id, secret_id) = id.split();
-        debug!("({}) Public id: {}, secret id: {}",
-               id,
-               public_id,
-               secret_id);
+        debug!(
+            "({}) Public id: {}, secret id: {}",
+            id, public_id, secret_id
+        );
         let time_played = Time::read(reader)?;
-        debug!("Time played: {:05}:{:02}:{:02}:{:02}",
-               time_played.hours,
-               time_played.minutes,
-               time_played.seconds,
-               time_played.frames);
+        debug!(
+            "Time played: {:05}:{:02}:{:02}:{:02}",
+            time_played.hours, time_played.minutes, time_played.seconds, time_played.frames
+        );
         let mut options_data = [0u8; 3];
         reader.read_exact(&mut options_data)?;
         let mut unknown_3 = [0u8; TRAINER_INFO_UNKNOWN_3_SIZE];
@@ -136,8 +138,10 @@ struct ReadSession {
 
 impl Section {
     fn read<R: Read + Seek>(reader: &mut R, session: &mut ReadSession) -> Result<Self, Box<Error>> {
-        debug!("== Reading section at offset {} ==",
-               reader.seek(SeekFrom::Current(0))?);
+        debug!(
+            "== Reading section at offset {} ==",
+            reader.seek(SeekFrom::Current(0))?
+        );
         // Skip data, so we can read section info first
         let data_pos = reader.seek(SeekFrom::Current(0))?;
         reader.seek(SeekFrom::Current(DATA_SIZE))?;
@@ -149,18 +153,19 @@ impl Section {
             ref mut opt @ None => *opt = Some(save_idx),
             Some(index) => {
                 if save_idx != index {
-                    return Err(format!("Not all save indexes in a block are the same. prev: {}, \
-                                        now: {}",
-                                       index,
-                                       save_idx)
-                        .into());
+                    return Err(format!(
+                        "Not all save indexes in a block are the same. prev: {}, \
+                         now: {}",
+                        index, save_idx
+                    )
+                    .into());
                 }
             }
         }
-        debug!("Section id: {}, cksum: {}, save idx: {}",
-               id,
-               cksum,
-               save_idx);
+        debug!(
+            "Section id: {}, cksum: {}, save idx: {}",
+            id, cksum, save_idx
+        );
         // Go ahead and read the data now
         let section_end_pos = reader.seek(SeekFrom::Current(0))?;
         reader.seek(SeekFrom::Start(data_pos))?;
@@ -171,11 +176,12 @@ impl Section {
                 match session.trainer_info_index {
                     ref mut opt @ None => *opt = Some(session.section_index),
                     Some(idx) => {
-                        return Err(format!("Duplicate TrainerInfo section at index {}. Previous \
-                                            was at index {}.",
-                                           session.section_index,
-                                           idx)
-                            .into())
+                        return Err(format!(
+                            "Duplicate TrainerInfo section at index {}. Previous \
+                             was at index {}.",
+                            session.section_index, idx
+                        )
+                        .into())
                     }
                 }
                 SectionData::TrainerInfo(info)
@@ -184,11 +190,12 @@ impl Section {
                 match session.team_and_items_index {
                     ref mut opt @ None => *opt = Some(session.section_index),
                     Some(idx) => {
-                        return Err(format!("Duplicate TeamAndItems section at index {}. Previous \
-                                            was at index {}.",
-                                           session.section_index,
-                                           idx)
-                            .into())
+                        return Err(format!(
+                            "Duplicate TeamAndItems section at index {}. Previous \
+                             was at index {}.",
+                            session.section_index, idx
+                        )
+                        .into())
                     }
                 }
                 SectionData::TeamAndItems(TeamAndItems::read(reader, session)?)
@@ -284,9 +291,11 @@ impl<'a> Read for PokemonStorageReader<'a> {
         };
         let pc_buf_data = &pc_buf.data[cursor..buf.len() + cursor];
         debug!("PC buf data: {:?}", pc_buf_data);
-        debug!("Witebuf len is {}, src len is {}",
-               buf.len(),
-               pc_buf_data.len());
+        debug!(
+            "Witebuf len is {}, src len is {}",
+            buf.len(),
+            pc_buf_data.len()
+        );
         buf.copy_from_slice(pc_buf_data);
         self.read_so_far += buf.len() as u64;
         Ok(buf.len())
@@ -311,14 +320,18 @@ impl<'a> Write for PokemonStorageWriter<'a> {
         let pc_buf = if let SectionData::PcBuffer(ref mut buf) = self.sections[box_index].data {
             buf
         } else {
-            panic!("Pc Buffer section expected, got {:?}",
-                   self.sections[box_index]);
+            panic!(
+                "Pc Buffer section expected, got {:?}",
+                self.sections[box_index]
+            );
         };
         let pc_buf_data = &mut pc_buf.data[cursor..buf.len() + cursor];
         debug!("PC buf data: {:?}", pc_buf_data);
-        debug!("Witebuf len is {}, src len is {}",
-               buf.len(),
-               pc_buf_data.len());
+        debug!(
+            "Witebuf len is {}, src len is {}",
+            buf.len(),
+            pc_buf_data.len()
+        );
         pc_buf_data.copy_from_slice(buf);
         self.written_so_far += buf.len() as u64;
         Ok(buf.len())
@@ -342,21 +355,26 @@ impl SaveBlock {
             team_and_items_index = 0;
             storage = Default::default();
         } else {
-            trainer_info_index = session.trainer_info_index.ok_or("Missing TrainerInfo section")?;
-            team_and_items_index = session.team_and_items_index
+            trainer_info_index = session
+                .trainer_info_index
+                .ok_or("Missing TrainerInfo section")?;
+            team_and_items_index = session
+                .team_and_items_index
                 .ok_or("Missing TeamAndItems section")?;
             let mut reader = PokemonStorageReader::new(&sections, &session);
             storage = PokemonStorage::read(&mut reader)?;
         }
-        Ok((SaveBlock {
-            sections: sections,
-            trainer_info_index: trainer_info_index,
-            team_and_items_index: team_and_items_index,
-            nonexistent: session.nonexistent,
-            pokemon_storage: storage,
-            box_indexes: session.box_indexes,
-        },
-            session.save_index.unwrap()))
+        Ok((
+            SaveBlock {
+                sections: sections,
+                trainer_info_index: trainer_info_index,
+                team_and_items_index: team_and_items_index,
+                nonexistent: session.nonexistent,
+                pokemon_storage: storage,
+                box_indexes: session.box_indexes,
+            },
+            session.save_index.unwrap(),
+        ))
     }
     fn write<W: Write>(&mut self, writer: &mut W) -> io::Result<()> {
         {
@@ -385,7 +403,11 @@ impl Save {
         let mut unknown = [0; UNKNOWN_SAVE_FOOTER_SIZE];
         reader.read_exact(&mut unknown)?;
         let most_recent_index = if !block1.nonexistent && !block2.nonexistent {
-            if block1_idx > block2_idx { 0 } else { 1 }
+            if block1_idx > block2_idx {
+                0
+            } else {
+                1
+            }
         } else if !block1.nonexistent && block2.nonexistent {
             0
         } else if !block2.nonexistent && block1.nonexistent {
@@ -414,7 +436,9 @@ impl Game {
             0 => {
                 let mut trailing_data = [0; RS_EM_PLAYERINFO_TRAILING_DATA_SIZE];
                 reader.read_exact(&mut trailing_data)?;
-                Game::RubyOrSapphire { trailing_data: trailing_data }
+                Game::RubyOrSapphire {
+                    trailing_data: trailing_data,
+                }
             }
             1 => {
                 let mut unknown = [0; FRLG_PLAYERINFO_UNKNOWN_CHUNK_SIZE];
@@ -444,13 +468,20 @@ impl Game {
                 writer.write_u32::<LE>(0)?;
                 writer.write_all(trailing_data)
             }
-            Game::FireredOrLeafgreen { ref unknown, security_key, ref trailing_data } => {
+            Game::FireredOrLeafgreen {
+                ref unknown,
+                security_key,
+                ref trailing_data,
+            } => {
                 writer.write_u32::<LE>(1)?;
                 writer.write_all(unknown)?;
                 writer.write_u32::<LE>(security_key)?;
                 writer.write_all(trailing_data)
             }
-            Game::Emerald { security_key, ref trailing_data } => {
+            Game::Emerald {
+                security_key,
+                ref trailing_data,
+            } => {
                 writer.write_u32::<LE>(security_key)?;
                 writer.write_all(trailing_data)
             }
@@ -495,9 +526,11 @@ impl SectionWrite for TeamAndItems {
             pokemon.write(writer)?;
         }
         let empty_slots_left = 6 - self.team.len();
-        debug!("{} pokemon written, {} empty slots left",
-               self.team.len(),
-               empty_slots_left);
+        debug!(
+            "{} pokemon written, {} empty slots left",
+            self.team.len(),
+            empty_slots_left
+        );
         // Fill out rest of pokemon slots with zero bytes
         let offset = self.team.len() * 100;
         writer.write_all(&self.orig_pokemon_data[offset..])?;
@@ -563,11 +596,13 @@ impl Pokemon {
         let markings = reader.read_u8()?;
         let checksum = reader.read_u16::<LE>()?;
         let unknown_1 = reader.read_u16::<LE>()?;
-        debug!("Pokemon with pv {}, otid {}, nick {}, otnick {}",
-               personality_value,
-               ot_id,
-               rgen3_string::decode_string(&nick),
-               rgen3_string::decode_string(&ot_name));
+        debug!(
+            "Pokemon with pv {}, otid {}, nick {}, otnick {}",
+            personality_value,
+            ot_id,
+            rgen3_string::decode_string(&nick),
+            rgen3_string::decode_string(&ot_name)
+        );
         let data = PokemonData::read(reader, personality_value, ot_id)?;
         Ok(Pokemon {
             personality: personality_value,
@@ -610,7 +645,8 @@ impl Pokemon {
     }
     fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
         self.write_non_active(writer)?;
-        let active_data = self.active_data
+        let active_data = self
+            .active_data
             .as_ref()
             .expect("Requested full write on pokemon not having active data");
         active_data.write(writer)
@@ -681,10 +717,18 @@ impl PokemonData {
                 let (growth, attacks, evs_and_condition, misc);
                 let dk = ot_id ^ pv;
                 macro_rules! read_section {
-                    (G) => {growth = PokemonGrowth::read(reader, dk)?};
-                    (A) => {attacks = PokemonAttacks::read(reader, dk)?};
-                    (E) => {evs_and_condition = PokemonEvsAndCondition::read(reader, dk)?};
-                    (M) => {misc = PokemonMisc::read(reader, dk)?};
+                    (G) => {
+                        growth = PokemonGrowth::read(reader, dk)?
+                    };
+                    (A) => {
+                        attacks = PokemonAttacks::read(reader, dk)?
+                    };
+                    (E) => {
+                        evs_and_condition = PokemonEvsAndCondition::read(reader, dk)?
+                    };
+                    (M) => {
+                        misc = PokemonMisc::read(reader, dk)?
+                    };
                 }
                 read_section!($r1);
                 read_section!($r2);
@@ -707,10 +751,18 @@ impl PokemonData {
         macro_rules! w {
             ($w1:ident $w2:ident $w3:ident $w4:ident) => {{
                 macro_rules! write_section {
-                    (G) => {self.growth.write_unencrypted(writer)?};
-                    (A) => {self.attacks.write_unencrypted(writer)?};
-                    (E) => {self.evs_and_condition.write_unencrypted(writer)?};
-                    (M) => {self.misc.write_unencrypted(writer)?};
+                    (G) => {
+                        self.growth.write_unencrypted(writer)?
+                    };
+                    (A) => {
+                        self.attacks.write_unencrypted(writer)?
+                    };
+                    (E) => {
+                        self.evs_and_condition.write_unencrypted(writer)?
+                    };
+                    (M) => {
+                        self.misc.write_unencrypted(writer)?
+                    };
                 }
                 write_section!($w1);
                 write_section!($w2);
@@ -727,9 +779,10 @@ impl PokemonData {
 
 const SUBSTRUCTURE_LEN: usize = 12;
 
-fn read_and_decrypt<R: Read>(reader: &mut R,
-                             dec_key: u32)
-                             -> Result<[u8; SUBSTRUCTURE_LEN], Box<Error>> {
+fn read_and_decrypt<R: Read>(
+    reader: &mut R,
+    dec_key: u32,
+) -> Result<[u8; SUBSTRUCTURE_LEN], Box<Error>> {
     let mut data = [0; SUBSTRUCTURE_LEN];
     reader.read_exact(&mut data)?;
     debug!("Encrypted data when reading substructure: {:?}", &data[..]);
@@ -746,8 +799,10 @@ fn read_and_decrypt<R: Read>(reader: &mut R,
         writer.write_u32::<LE>(n2 ^ dec_key)?;
         writer.write_u32::<LE>(n3 ^ dec_key)?;
     }
-    debug!("Unencrypted data when reading substructure: {:?}",
-           &data[..]);
+    debug!(
+        "Unencrypted data when reading substructure: {:?}",
+        &data[..]
+    );
     Ok(data)
 }
 
@@ -902,7 +957,11 @@ impl SectionWrite for PcBuffer {
         self.index as u16 + 5
     }
     fn cksum_area_len(&self) -> u64 {
-        if self.id() == 13 { 2000 } else { 3968 }
+        if self.id() == 13 {
+            2000
+        } else {
+            3968
+        }
     }
     fn write_data<W: Write>(&self, writer: &mut W) -> io::Result<()> {
         writer.write_all(&self.data)
