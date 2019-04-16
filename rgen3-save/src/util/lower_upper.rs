@@ -11,10 +11,10 @@ pub trait LowerUpper {
 impl LowerUpper for u32 {
     type Half = u16;
     fn split(&self) -> (Self::Half, Self::Half) {
-        ((self & 0x0000FFFF) as u16, (self >> 16) as u16)
+        ((self & 0x0000_FFFF) as u16, (self >> 16) as u16)
     }
     fn merge(lower: Self::Half, upper: Self::Half) -> Self {
-        (lower as u32) | ((upper as u32) << 16)
+        u32::from(lower) | (u32::from(upper) << 16)
     }
 }
 

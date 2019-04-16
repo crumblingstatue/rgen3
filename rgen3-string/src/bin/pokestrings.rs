@@ -24,7 +24,7 @@ fn main() {
             }
             PokeChar::Term => {
                 if consecutive_terms == 0 {
-                    println!("");
+                    println!();
                 }
                 consecutive_terms += 1;
             }

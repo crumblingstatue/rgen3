@@ -86,6 +86,7 @@ struct SaveBlock {
     box_indexes: [usize; N_BOXES],
 }
 
+#[allow(clippy::large_enum_variant)]
 enum SectionData {
     Unimplemented {
         raw: [u8; DATA_SIZE as usize],
@@ -239,11 +240,13 @@ const EM_RU_SA_TEAMANDITEMS_REM_LEN: usize =
 const FR_LG_TEAMANDITEMS_REM_LEN: usize =
     DATA_SIZE as usize - (FR_LG_TEAMANDITEMS_UNK_LEN + TEAMANDITEMS_POKE_LEN + 4);
 
+#[allow(clippy::large_enum_variant)]
 enum TeamAndItemsUnknown {
     EmeraldOrRubyOrSapphire([u8; EM_RU_SA_TEAMANDITEMS_UNK_LEN]),
     FireRedOrLeafGreen([u8; FR_LG_TEAMANDITEMS_UNK_LEN]),
 }
 
+#[allow(clippy::large_enum_variant)]
 enum TeamAndItemsRemaining {
     EmeraldOrRubyOrSapphire([u8; EM_RU_SA_TEAMANDITEMS_REM_LEN]),
     FireredOrLeafgreen([u8; FR_LG_TEAMANDITEMS_REM_LEN]),

@@ -75,15 +75,15 @@ impl TrainerInfo {
         debug!("Game info: {:?}", game);
         Ok(TrainerInfo {
             name: TrainerName(name_buffer),
-            unknown_1: unknown_1,
-            gender: gender,
-            unknown_2: unknown_2,
+            unknown_1,
+            gender,
+            unknown_2,
             public_id: public_id as u16,
             secret_id: secret_id as u16,
-            time_played: time_played,
-            options_data: options_data,
-            unknown_3: unknown_3,
-            game: game,
+            time_played,
+            options_data,
+            unknown_3,
+            game,
         })
     }
 }
@@ -209,7 +209,7 @@ impl Section {
                 session.nonexistent = true;
                 SectionData::Unimplemented {
                     raw: [0xFF; DATA_SIZE as usize],
-                    id: id,
+                    id,
                     cksum: 0xFFFF,
                 }
             }
@@ -219,8 +219,8 @@ impl Section {
                 reader.read_exact(&mut data)?;
                 SectionData::Unimplemented {
                     raw: data,
-                    id: id,
-                    cksum: cksum,
+                    id,
+                    cksum,
                 }
             }
         };
@@ -229,9 +229,9 @@ impl Section {
         // Increment section index counter
         session.section_index += 1;
         Ok(Section {
-            data: data,
-            unknown_1: unknown_1,
-            save_idx: save_idx,
+            data,
+            unknown_1,
+            save_idx,
         })
     }
     fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
@@ -266,8 +266,8 @@ struct PokemonStorageReader<'a> {
 impl<'a> PokemonStorageReader<'a> {
     fn new(sections: &'a [Section], session: &'a ReadSession) -> Self {
         PokemonStorageReader {
-            sections: sections,
-            session: session,
+            sections,
+            session,
             read_so_far: 0,
         }
     }
@@ -276,7 +276,7 @@ impl<'a> PokemonStorageReader<'a> {
 const PC_BUFFER_DATA_LEN: usize = 3968;
 
 impl<'a> Read for PokemonStorageReader<'a> {
-    fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         debug!("PokemonStorageReader::read called on {:?}", buf);
         debug!("Read so far: {}", self.read_so_far);
         let index = self.read_so_far / PC_BUFFER_DATA_LEN as u64;
@@ -366,9 +366,9 @@ impl SaveBlock {
         }
         Ok((
             SaveBlock {
-                sections: sections,
-                trainer_info_index: trainer_info_index,
-                team_and_items_index: team_and_items_index,
+                sections,
+                trainer_info_index,
+                team_and_items_index,
                 nonexistent: session.nonexistent,
                 pokemon_storage: storage,
                 box_indexes: session.box_indexes,
@@ -417,8 +417,8 @@ impl Save {
         };
         Ok(Save {
             blocks: [block1, block2],
-            unknown: unknown,
-            most_recent_index: most_recent_index,
+            unknown,
+            most_recent_index,
         })
     }
     /// Write the save data to a `Write` implementer.
@@ -436,9 +436,7 @@ impl Game {
             0 => {
                 let mut trailing_data = [0; RS_EM_PLAYERINFO_TRAILING_DATA_SIZE];
                 reader.read_exact(&mut trailing_data)?;
-                Game::RubyOrSapphire {
-                    trailing_data: trailing_data,
-                }
+                Game::RubyOrSapphire { trailing_data }
             }
             1 => {
                 let mut unknown = [0; FRLG_PLAYERINFO_UNKNOWN_CHUNK_SIZE];
@@ -447,9 +445,9 @@ impl Game {
                 let mut trailing_data = [0; FRLG_PLAYERINFO_TRAILING_DATA_SIZE];
                 reader.read_exact(&mut trailing_data)?;
                 Game::FireredOrLeafgreen {
-                    unknown: unknown,
-                    security_key: security_key,
-                    trailing_data: trailing_data,
+                    unknown,
+                    security_key,
+                    trailing_data,
                 }
             }
             etc => {
@@ -457,7 +455,7 @@ impl Game {
                 reader.read_exact(&mut trailing_data)?;
                 Game::Emerald {
                     security_key: etc,
-                    trailing_data: trailing_data,
+                    trailing_data,
                 }
             }
         })
@@ -504,8 +502,8 @@ impl TeamAndItems {
         }
         let remaining = TeamAndItemsRemaining::read(reader, game_type)?;
         Ok(TeamAndItems {
-            unknown: unknown,
-            team: team,
+            unknown,
+            team,
             orig_pokemon_data: poke_data,
             remaining_data: remaining,
         })
@@ -606,14 +604,14 @@ impl Pokemon {
         let data = PokemonData::read(reader, personality_value, ot_id)?;
         Ok(Pokemon {
             personality: personality_value,
-            ot_id: ot_id,
+            ot_id,
             nickname: PokemonNick(nick),
-            language: language,
+            language,
             ot_name: TrainerName(ot_name),
-            markings: markings,
-            checksum: checksum,
-            unknown_1: unknown_1,
-            data: data,
+            markings,
+            checksum,
+            unknown_1,
+            data,
             active_data: None,
         })
     }
@@ -945,10 +943,7 @@ impl PcBuffer {
     fn read<R: Read>(reader: &mut R, index: usize) -> Result<Self, Box<Error>> {
         let mut data = [0u8; DATA_SIZE as usize];
         reader.read_exact(&mut data)?;
-        Ok(PcBuffer {
-            data: data,
-            index: index,
-        })
+        Ok(PcBuffer { data, index })
     }
 }
 
@@ -984,7 +979,7 @@ impl PokemonStorage {
         }
         Ok(PokemonStorage {
             current_box: current_box as usize,
-            boxes: boxes,
+            boxes,
         })
     }
     fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {

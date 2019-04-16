@@ -83,7 +83,7 @@ pub fn encode_string(src: &str, dst: &mut [u8]) {
     }) {
         *dst_bytes.next().unwrap() = ch;
     }
-    while let Some(b) = dst_bytes.next() {
+    for b in dst_bytes {
         *b = 0xFF;
     }
 }
