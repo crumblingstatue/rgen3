@@ -107,7 +107,7 @@ fn main() {
         } = save.sections_mut();
         let mut generator = PokeGen::new(trainer);
         for b in pc_boxes.iter_mut() {
-            for p in &mut b.pokemon {
+            for p in &mut b.slots {
                 *p = Some(generator.gen());
             }
         }

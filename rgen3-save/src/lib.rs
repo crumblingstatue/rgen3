@@ -463,5 +463,5 @@ const N_POKEMON_PER_BOX: usize = 30;
 pub struct PokeBox {
     name: BoxName,
     wallpaper: u8,
-    pub pokemon: [Option<Pokemon>; N_POKEMON_PER_BOX],
+    pub slots: [Option<Pokemon>; N_POKEMON_PER_BOX],
 }

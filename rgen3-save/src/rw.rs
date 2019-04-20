@@ -1000,7 +1000,7 @@ impl PokemonStorage {
 impl PokeBox {
     fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
         let mut poke_box = PokeBox::default();
-        for opt_pokemon in &mut poke_box.pokemon {
+        for opt_pokemon in &mut poke_box.slots {
             let mut data = [0; 80];
             reader.read_exact(&mut data)?;
             // If the entire data is zero bytes, then the slot is empty
@@ -1011,7 +1011,7 @@ impl PokeBox {
         Ok(poke_box)
     }
     fn write<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-        for opt_pokemon in &self.pokemon {
+        for opt_pokemon in &self.slots {
             match *opt_pokemon {
                 Some(ref pokemon) => {
                     let mut buf = [0; 80];

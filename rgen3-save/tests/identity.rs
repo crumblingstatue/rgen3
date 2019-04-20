@@ -53,7 +53,7 @@ fn pc_fill() {
         {
             let SaveSectionsMut { pc_boxes, .. } = save.sections_mut();
             for b in pc_boxes.iter_mut() {
-                for p in &mut b.pokemon {
+                for p in &mut b.slots {
                     let mut poke = Pokemon::default();
                     poke.nickname.0[0] = 0x01;
                     poke.ot_name.0[0] = 0x01;
