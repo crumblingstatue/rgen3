@@ -11,11 +11,11 @@ mod util {
 }
 mod rw;
 
+use crate::util::LowerUpper;
 use std::error::Error;
 use std::fs::File;
 use std::path::Path;
 use std::{fmt, io};
-use util::LowerUpper;
 
 const UNKNOWN_SAVE_FOOTER_SIZE: usize = 16384;
 

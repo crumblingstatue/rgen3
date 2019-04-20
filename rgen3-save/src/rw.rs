@@ -1,9 +1,5 @@
-use byteorder::{LittleEndian as LE, ReadBytesExt, WriteBytesExt};
-use std::error::Error;
-use std::io::prelude::*;
-use std::io::{self, SeekFrom};
-use util::LowerUpper;
-use {
+use crate::util::LowerUpper;
+use crate::{
     rgen3_string, Game, GameType, Gender, PcBuffer, PokeBox, Pokemon, PokemonActiveData,
     PokemonAttacks, PokemonData, PokemonEvsAndCondition, PokemonGrowth, PokemonMisc, PokemonNick,
     PokemonStorage, Save, SaveBlock, Section, SectionData, TeamAndItems, TeamAndItemsRemaining,
@@ -13,6 +9,10 @@ use {
     N_BOXES, POKEMON_NICK_LEN, RS_EM_PLAYERINFO_TRAILING_DATA_SIZE, TEAMANDITEMS_POKE_LEN,
     TRAINER_INFO_UNKNOWN_3_SIZE, TRAINER_NAME_LEN, UNKNOWN_SAVE_FOOTER_SIZE,
 };
+use byteorder::{LittleEndian as LE, ReadBytesExt, WriteBytesExt};
+use std::error::Error;
+use std::io::prelude::*;
+use std::io::{self, SeekFrom};
 
 trait SectionWrite {
     fn id(&self) -> u16;

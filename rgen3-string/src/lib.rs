@@ -19,7 +19,7 @@ impl PokeChar {
     }
 }
 
-use PokeChar::Print as P;
+use crate::PokeChar::Print as P;
 
 macro_rules! map {
     ($($nv:expr => $pc:expr,)+) => {
