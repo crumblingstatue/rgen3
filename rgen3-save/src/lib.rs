@@ -70,12 +70,41 @@ impl Save {
             pc_boxes: &mut block.pokemon_storage.boxes,
         }
     }
+    pub fn sections(&self) -> SaveSections {
+        let block = &self.blocks[self.most_recent_index];
+        let sections = &block.sections[..];
+        let (team_items_sec, trainer_sec) = (
+            &sections[block.team_and_items_index],
+            &sections[block.trainer_info_index],
+        );
+        let team_and_items = if let SectionData::TeamAndItems(ref data) = team_items_sec.data {
+            data
+        } else {
+            panic!("Unexpected section data. Expected TeamAndItems");
+        };
+        let trainer_info = if let SectionData::TrainerInfo(ref data) = trainer_sec.data {
+            data
+        } else {
+            panic!("Unexpected section data. Expected TrainerInfo");
+        };
+        SaveSections {
+            team: &team_and_items.team,
+            trainer: trainer_info,
+            pc_boxes: &block.pokemon_storage.boxes,
+        }
+    }
 }
 
 pub struct SaveSectionsMut<'a> {
     pub trainer: &'a mut TrainerInfo,
     pub team: &'a mut Vec<Pokemon>,
     pub pc_boxes: &'a mut [PokeBox],
+}
+
+pub struct SaveSections<'a> {
+    pub trainer: &'a TrainerInfo,
+    pub team: &'a Vec<Pokemon>,
+    pub pc_boxes: &'a [PokeBox],
 }
 
 #[derive(Debug)]
