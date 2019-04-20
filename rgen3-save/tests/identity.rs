@@ -1,7 +1,7 @@
 extern crate env_logger;
 extern crate rgen3_save;
 
-use rgen3_save::{Pokemon, Save, SaveSections};
+use rgen3_save::{Pokemon, Save, SaveSectionsMut};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::Cursor;
@@ -51,7 +51,7 @@ fn no_change() {
 fn pc_fill() {
     run_test(|_, mut save| {
         {
-            let SaveSections { pc_boxes, .. } = save.sections();
+            let SaveSectionsMut { pc_boxes, .. } = save.sections_mut();
             for b in pc_boxes.iter_mut() {
                 for p in &mut b.pokemon {
                     let mut poke = Pokemon::default();

@@ -3,7 +3,7 @@ extern crate rgen3_save;
 extern crate rgen3_string;
 
 use rand::{thread_rng, Rng, ThreadRng};
-use rgen3_save::{Pokemon, SaveSections, TrainerInfo};
+use rgen3_save::{Pokemon, SaveSectionsMut, TrainerInfo};
 use std::collections::HashSet;
 
 static PREFIX_NAMES: [&'static str; 52] = [
@@ -102,9 +102,9 @@ fn main() {
     let path = args.next().expect("Need path to save as first arg");
     let mut save = rgen3_save::Save::load_from_file(&path).unwrap();
     {
-        let SaveSections {
+        let SaveSectionsMut {
             trainer, pc_boxes, ..
-        } = save.sections();
+        } = save.sections_mut();
         let mut generator = PokeGen::new(trainer);
         for b in pc_boxes.iter_mut() {
             for p in &mut b.pokemon {

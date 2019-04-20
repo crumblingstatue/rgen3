@@ -43,7 +43,7 @@ impl Save {
         let mut file = File::create(path)?;
         self.write(&mut file)
     }
-    pub fn sections(&mut self) -> SaveSections {
+    pub fn sections_mut(&mut self) -> SaveSectionsMut {
         let block = &mut self.blocks[self.most_recent_index];
         let sections = &mut block.sections[..];
         let (team_items_sec, trainer_sec) = if block.team_and_items_index > block.trainer_info_index
@@ -64,7 +64,7 @@ impl Save {
         } else {
             panic!("Unexpected section data. Expected TrainerInfo");
         };
-        SaveSections {
+        SaveSectionsMut {
             team: &mut team_and_items.team,
             trainer: trainer_info,
             pc_boxes: &mut block.pokemon_storage.boxes,
@@ -72,7 +72,7 @@ impl Save {
     }
 }
 
-pub struct SaveSections<'a> {
+pub struct SaveSectionsMut<'a> {
     pub trainer: &'a mut TrainerInfo,
     pub team: &'a mut Vec<Pokemon>,
     pub pc_boxes: &'a mut [PokeBox],
