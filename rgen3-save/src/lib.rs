@@ -46,16 +46,20 @@ impl Save {
     pub fn sections(&mut self) -> SaveSections {
         let block = &mut self.blocks[self.most_recent_index];
         let sections = &mut block.sections[..];
-        let team_and_items = if let SectionData::TeamAndItems(ref mut data) =
-            sections[block.team_and_items_index].data
+        let (team_items_sec, trainer_sec) = if block.team_and_items_index > block.trainer_info_index
         {
+            let (lhs, rhs) = sections.split_at_mut(block.team_and_items_index);
+            (&mut rhs[0], &mut lhs[block.trainer_info_index])
+        } else {
+            let (lhs, rhs) = sections.split_at_mut(block.trainer_info_index);
+            (&mut lhs[block.team_and_items_index], &mut rhs[0])
+        };
+        let team_and_items = if let SectionData::TeamAndItems(ref mut data) = team_items_sec.data {
             data
         } else {
             panic!("Unexpected section data. Expected TeamAndItems");
         };
-        let trainer_info = if let SectionData::TrainerInfo(ref mut data) =
-            sections[block.trainer_info_index].data
-        {
+        let trainer_info = if let SectionData::TrainerInfo(ref mut data) = trainer_sec.data {
             data
         } else {
             panic!("Unexpected section data. Expected TrainerInfo");
