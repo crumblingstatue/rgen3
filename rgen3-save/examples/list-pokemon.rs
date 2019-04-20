@@ -72,11 +72,5 @@ fn print_pokemon(pokemon: &Pokemon, pokemap: &HashMap<u16, (&'static str, Vec<&'
             + u16::from(evc.sp_attack)
             + u16::from(evc.sp_defense)
     );
-    println!("Contest:");
-    println!("cool: {}", evc.coolness);
-    println!("beauty: {}", evc.beauty);
-    println!("cute: {}", evc.cuteness);
-    println!("smart: {}", evc.smartness);
-    println!("tough: {}", evc.toughness);
     println!("-")
 }
