@@ -439,4 +439,4 @@ make_poke_map! {
 437,"Unown","Psychic",;
 438,"Unown","Psychic",;
 439,"Unown","Psychic",;
-};
+}
