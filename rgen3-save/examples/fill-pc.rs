@@ -1,8 +1,4 @@
-extern crate rand;
-extern crate rgen3_save;
-extern crate rgen3_string;
-
-use rand::{Rng, ThreadRng, thread_rng};
+use rand::{Rng as _, seq::IndexedRandom};
 use rgen3_save::{Pokemon, SaveSectionsMut, TrainerInfo};
 use std::collections::HashSet;
 
@@ -25,7 +21,7 @@ struct PokeGen<'a> {
     chosen_species: HashSet<u16>,
     n_unique: u16,
     trainer: &'a TrainerInfo,
-    rng: ThreadRng,
+    rng: rand::rngs::ThreadRng,
 }
 
 impl<'a> PokeGen<'a> {
@@ -35,15 +31,15 @@ impl<'a> PokeGen<'a> {
             chosen_species: HashSet::new(),
             n_unique: 0,
             trainer,
-            rng: thread_rng(),
+            rng: rand::rng(),
         }
     }
     fn random(&mut self) -> Pokemon {
         let mut pokemon = Pokemon::default();
         let mut name;
         loop {
-            let prefix = self.rng.choose(&PREFIX_NAMES).unwrap();
-            let suffix = self.rng.choose(&SUFFIX_NAMES).unwrap();
+            let prefix = PREFIX_NAMES.choose(&mut self.rng).unwrap();
+            let suffix = SUFFIX_NAMES.choose(&mut self.rng).unwrap();
             name = format!("{} {}", prefix, suffix);
             // Make sure we don't use the same name twice in our team
             if !self.chosen_names.contains(&name) {
@@ -54,7 +50,7 @@ impl<'a> PokeGen<'a> {
         self.chosen_names.insert(name);
         {
             loop {
-                let species = self.rng.gen_range(1, 412);
+                let species = self.rng.random_range(1..412);
                 let result = pokemon.set_species(species);
                 if result.is_ok() {
                     if self.chosen_species.contains(&species) {
@@ -71,10 +67,10 @@ impl<'a> PokeGen<'a> {
             pokemon.data.growth.experience = 1_640_000;
             pokemon.data.growth.friendship = 0xFF;
             pokemon.data.growth.pp_bonuses = 0xFF;
-            pokemon.data.attacks.move1 = self.rng.gen_range(0, 354);
-            pokemon.data.attacks.move2 = self.rng.gen_range(0, 354);
-            pokemon.data.attacks.move3 = self.rng.gen_range(0, 354);
-            pokemon.data.attacks.move4 = self.rng.gen_range(0, 354);
+            pokemon.data.attacks.move1 = self.rng.random_range(0..354);
+            pokemon.data.attacks.move2 = self.rng.random_range(0..354);
+            pokemon.data.attacks.move3 = self.rng.random_range(0..354);
+            pokemon.data.attacks.move4 = self.rng.random_range(0..354);
             pokemon.data.attacks.pp1 = 99;
             pokemon.data.attacks.pp2 = 99;
             pokemon.data.attacks.pp3 = 99;

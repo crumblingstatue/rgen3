@@ -1,5 +1,3 @@
-extern crate rgen3_string;
-
 use std::io::{BufReader, prelude::*};
 
 use rgen3_string::PokeChar;

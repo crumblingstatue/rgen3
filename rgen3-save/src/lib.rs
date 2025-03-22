@@ -1,10 +1,5 @@
 //! Library for manipulating Pokémon Gen3 (Fire Red/Leaf Green, Ruby/Emerald/Sapphire) save data.
 
-#[macro_use]
-extern crate log;
-extern crate byteorder;
-extern crate rgen3_string;
-
 mod util {
     mod lower_upper;
     pub use self::lower_upper::LowerUpper;

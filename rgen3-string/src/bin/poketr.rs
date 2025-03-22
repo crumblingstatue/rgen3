@@ -1,5 +1,3 @@
-extern crate rgen3_string;
-
 use std::io::{BufReader, prelude::*};
 
 fn main() {

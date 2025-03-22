@@ -1,6 +1,3 @@
-extern crate env_logger;
-extern crate rgen3_save;
-
 use rgen3_save::{Pokemon, Save, SaveSectionsMut};
 use std::fs::File;
 use std::io::Cursor;
@@ -21,7 +18,7 @@ fn cmp(orig: &[u8], new: &[u8]) {
 }
 
 fn run_test<F: Fn(&[u8], Save)>(test: F) {
-    let _ = env_logger::init();
+    let _ = env_logger::try_init();
     let paths =
         std::env::var("RGEN3_TEST_SAVES").expect("Need RGEN3_TEST_SAVES env var set to a path");
     let paths = paths.split(';');

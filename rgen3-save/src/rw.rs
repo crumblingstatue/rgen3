@@ -8,9 +8,10 @@ use crate::{
     RS_EM_PLAYERINFO_TRAILING_DATA_SIZE, Save, SaveBlock, Section, SectionData,
     TEAMANDITEMS_POKE_LEN, TRAINER_INFO_UNKNOWN_3_SIZE, TRAINER_NAME_LEN, TeamAndItems,
     TeamAndItemsRemaining, TeamAndItemsUnknown, Time, TrainerInfo, TrainerName,
-    UNKNOWN_SAVE_FOOTER_SIZE, rgen3_string,
+    UNKNOWN_SAVE_FOOTER_SIZE,
 };
 use byteorder::{LittleEndian as LE, ReadBytesExt, WriteBytesExt};
+use log::debug;
 use std::error::Error;
 use std::io::prelude::*;
 use std::io::{self, SeekFrom};
