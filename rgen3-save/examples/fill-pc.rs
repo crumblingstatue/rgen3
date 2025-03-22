@@ -6,7 +6,7 @@ use rand::{thread_rng, Rng, ThreadRng};
 use rgen3_save::{Pokemon, SaveSectionsMut, TrainerInfo};
 use std::collections::HashSet;
 
-static PREFIX_NAMES: [&'static str; 52] = [
+static PREFIX_NAMES: [&str; 52] = [
     "Acid", "Axel", "Baal", "Bike", "Bull", "Bald", "Cave", "Diet", "Dray", "Duke", "Easy", "Fact",
     "Face", "Fowl", "Fuzz", "Goat", "Hair", "Head", "Hiss", "Idea", "Iris", "Iron", "Jack", "John",
     "Kart", "Lady", "Limb", "Lime", "Mace", "Mars", "Naga", "Nuke", "Nude", "Omen", "Orca", "Poke",
@@ -14,7 +14,7 @@ static PREFIX_NAMES: [&'static str; 52] = [
     "Xray", "Yoga", "Zeta", "Zoom",
 ];
 
-static SUFFIX_NAMES: [&'static str; 23] = [
+static SUFFIX_NAMES: [&str; 23] = [
     "Adder", "Baker", "Biter", "Coder", "Curer", "Diver", "Eater", "Faker", "Flier", "Frier",
     "Gamer", "Gazer", "Giver", "Laser", "Lover", "Maker", "Order", "Racer", "Taker", "Tamer",
     "Voter", "Waker", "Zoner",
@@ -34,7 +34,7 @@ impl<'a> PokeGen<'a> {
             chosen_names: HashSet::new(),
             chosen_species: HashSet::new(),
             n_unique: 0,
-            trainer: trainer,
+            trainer,
             rng: thread_rng(),
         }
     }

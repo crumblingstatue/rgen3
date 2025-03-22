@@ -34,7 +34,7 @@ impl fmt::Debug for Save {
 
 impl Save {
     /// Load the save data from a file at the provided path.
-    pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<Error>> {
+    pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn Error>> {
         let mut file = File::open(path)?;
         Save::read(&mut file)
     }
@@ -203,7 +203,7 @@ enum GameType {
     Emerald,
 }
 
-impl<'a> From<&'a Game> for GameType {
+impl From<&'_ Game> for GameType {
     fn from(src: &Game) -> Self {
         match *src {
             Game::RubyOrSapphire { .. } => GameType::RubyOrSapphire,
@@ -337,7 +337,7 @@ pub struct Pokemon {
     language: u16,
     pub ot_name: TrainerName,
     markings: u8,
-    checksum: u16,
+    _checksum: u16,
     unknown_1: u16,
     pub data: PokemonData,
     pub active_data: Option<PokemonActiveData>,
@@ -349,7 +349,7 @@ pub struct InvalidSpecies;
 impl Pokemon {
     pub fn set_species(&mut self, num: u16) -> Result<(), InvalidSpecies> {
         match num {
-            1...251 | 277...411 => {
+            1..=251 | 277..=411 => {
                 self.data.growth.species = num;
                 Ok(())
             }

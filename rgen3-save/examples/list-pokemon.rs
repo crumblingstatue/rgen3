@@ -11,7 +11,7 @@ macro_rules! make_poke_map {
                 kinds.push($kind);
             )+
             map.insert($id, ($name, kinds));
-        );+
+        )+
         map
     }}
 }

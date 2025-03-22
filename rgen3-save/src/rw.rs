@@ -34,14 +34,14 @@ trait SectionWrite {
         }
         writer.write_all(&buf)?;
         let (lower, upper) = cksum.split();
-        let cksum = (upper as u16).wrapping_add(lower as u16);
+        let cksum = upper.wrapping_add(lower);
         debug!("Calculated checksum is {}", cksum);
         writer.write_u16::<LE>(cksum)
     }
 }
 
 impl TrainerInfo {
-    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<dyn Error>> {
         let mut name_buffer = [0u8; 7];
         reader.read_exact(&mut name_buffer)?;
         debug!(
@@ -78,8 +78,8 @@ impl TrainerInfo {
             unknown_1,
             gender,
             unknown_2,
-            public_id: public_id as u16,
-            secret_id: secret_id as u16,
+            public_id,
+            secret_id,
             time_played,
             options_data,
             unknown_3,
@@ -137,13 +137,16 @@ struct ReadSession {
 }
 
 impl Section {
-    fn read<R: Read + Seek>(reader: &mut R, session: &mut ReadSession) -> Result<Self, Box<Error>> {
+    fn read<R: Read + Seek>(
+        reader: &mut R,
+        session: &mut ReadSession,
+    ) -> Result<Self, Box<dyn Error>> {
         debug!(
             "== Reading section at offset {} ==",
-            reader.seek(SeekFrom::Current(0))?
+            reader.stream_position()?
         );
         // Skip data, so we can read section info first
-        let data_pos = reader.seek(SeekFrom::Current(0))?;
+        let data_pos = reader.stream_position()?;
         reader.seek(SeekFrom::Current(DATA_SIZE))?;
         let id = reader.read_u16::<LE>()?;
         let cksum = reader.read_u16::<LE>()?;
@@ -167,7 +170,7 @@ impl Section {
             id, cksum, save_idx
         );
         // Go ahead and read the data now
-        let section_end_pos = reader.seek(SeekFrom::Current(0))?;
+        let section_end_pos = reader.stream_position()?;
         reader.seek(SeekFrom::Start(data_pos))?;
         let data = match id {
             0 => {
@@ -200,7 +203,7 @@ impl Section {
                 }
                 SectionData::TeamAndItems(TeamAndItems::read(reader, session)?)
             }
-            5...13 => {
+            5..=13 => {
                 let index = id as usize - 5;
                 session.box_indexes[index] = session.section_index;
                 SectionData::PcBuffer(PcBuffer::read(reader, index)?)
@@ -342,7 +345,7 @@ impl<'a> Write for PokemonStorageWriter<'a> {
 }
 
 impl SaveBlock {
-    fn read<R: Read + Seek>(reader: &mut R) -> Result<(Self, u32), Box<Error>> {
+    fn read<R: Read + Seek>(reader: &mut R) -> Result<(Self, u32), Box<dyn Error>> {
         debug!("== Reading save block ==");
         let mut session = ReadSession::default();
         let mut sections = Vec::new();
@@ -396,7 +399,7 @@ impl SaveBlock {
 
 impl Save {
     /// Read the save data from a `Read` implementer.
-    pub fn read<R: Read + Seek>(reader: &mut R) -> Result<Self, Box<Error>> {
+    pub fn read<R: Read + Seek>(reader: &mut R) -> Result<Self, Box<dyn Error>> {
         debug!("== Reading save ==");
         let (block1, block1_idx) = SaveBlock::read(reader)?;
         let (block2, block2_idx) = SaveBlock::read(reader)?;
@@ -431,7 +434,7 @@ impl Save {
 }
 
 impl Game {
-    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<dyn Error>> {
         Ok(match reader.read_u32::<LE>()? {
             0 => {
                 let mut trailing_data = [0; RS_EM_PLAYERINFO_TRAILING_DATA_SIZE];
@@ -488,7 +491,7 @@ impl Game {
 }
 
 impl TeamAndItems {
-    fn read<R: Read>(reader: &mut R, session: &ReadSession) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R, session: &ReadSession) -> Result<Self, Box<dyn Error>> {
         let game_type = session.game_type.expect("Game type not yet available");
         let unknown = TeamAndItemsUnknown::read(reader, game_type)?;
         let team_size = reader.read_u32::<LE>()?;
@@ -537,7 +540,7 @@ impl SectionWrite for TeamAndItems {
 }
 
 impl TeamAndItemsUnknown {
-    fn read<R: Read>(reader: &mut R, game_type: GameType) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R, game_type: GameType) -> Result<Self, Box<dyn Error>> {
         Ok(match game_type {
             GameType::Emerald | GameType::RubyOrSapphire => {
                 let mut buffer = [0; EM_RU_SA_TEAMANDITEMS_UNK_LEN];
@@ -583,7 +586,7 @@ impl TeamAndItemsRemaining {
 }
 
 impl Pokemon {
-    fn read_non_active<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
+    fn read_non_active<R: Read>(reader: &mut R) -> Result<Self, Box<dyn Error>> {
         let personality_value = reader.read_u32::<LE>()?;
         let ot_id = reader.read_u32::<LE>()?;
         let mut nick = [0; POKEMON_NICK_LEN];
@@ -609,13 +612,13 @@ impl Pokemon {
             language,
             ot_name: TrainerName(ot_name),
             markings,
-            checksum,
+            _checksum: checksum,
             unknown_1,
             data,
             active_data: None,
         })
     }
-    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<dyn Error>> {
         let mut pokemon = Self::read_non_active(reader)?;
         pokemon.active_data = Some(PokemonActiveData::read(reader)?);
         Ok(pokemon)
@@ -709,7 +712,7 @@ macro_rules! rw_order {
 }
 
 impl PokemonData {
-    fn read<R: Read>(reader: &mut R, pv: u32, ot_id: u32) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R, pv: u32, ot_id: u32) -> Result<Self, Box<dyn Error>> {
         macro_rules! r {
             ($r1:ident $r2:ident $r3:ident $r4:ident) => {{
                 let (growth, attacks, evs_and_condition, misc);
@@ -734,10 +737,10 @@ impl PokemonData {
                 read_section!($r4);
 
                 Ok(PokemonData {
-                    growth: growth,
-                    attacks: attacks,
-                    evs_and_condition: evs_and_condition,
-                    misc: misc,
+                    growth,
+                    attacks,
+                    evs_and_condition,
+                    misc,
                 })
             }};
         }
@@ -780,7 +783,7 @@ const SUBSTRUCTURE_LEN: usize = 12;
 fn read_and_decrypt<R: Read>(
     reader: &mut R,
     dec_key: u32,
-) -> Result<[u8; SUBSTRUCTURE_LEN], Box<Error>> {
+) -> Result<[u8; SUBSTRUCTURE_LEN], Box<dyn Error>> {
     let mut data = [0; SUBSTRUCTURE_LEN];
     reader.read_exact(&mut data)?;
     debug!("Encrypted data when reading substructure: {:?}", &data[..]);
@@ -805,7 +808,7 @@ fn read_and_decrypt<R: Read>(
 }
 
 impl PokemonGrowth {
-    fn read<R: Read>(reader: &mut R, dec_key: u32) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R, dec_key: u32) -> Result<Self, Box<dyn Error>> {
         let data = read_and_decrypt(reader, dec_key)?;
         let mut reader = &data[..];
         Ok(PokemonGrowth {
@@ -828,7 +831,7 @@ impl PokemonGrowth {
 }
 
 impl PokemonAttacks {
-    fn read<R: Read>(reader: &mut R, dec_key: u32) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R, dec_key: u32) -> Result<Self, Box<dyn Error>> {
         let data = read_and_decrypt(reader, dec_key)?;
         let mut reader = &data[..];
         Ok(PokemonAttacks {
@@ -855,7 +858,7 @@ impl PokemonAttacks {
 }
 
 impl PokemonEvsAndCondition {
-    fn read<R: Read>(reader: &mut R, dec_key: u32) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R, dec_key: u32) -> Result<Self, Box<dyn Error>> {
         let data = read_and_decrypt(reader, dec_key)?;
         let mut reader = &data[..];
         Ok(PokemonEvsAndCondition {
@@ -890,7 +893,7 @@ impl PokemonEvsAndCondition {
 }
 
 impl PokemonMisc {
-    fn read<R: Read>(reader: &mut R, dec_key: u32) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R, dec_key: u32) -> Result<Self, Box<dyn Error>> {
         let data = read_and_decrypt(reader, dec_key)?;
         let mut reader = &data[..];
         Ok(PokemonMisc {
@@ -940,7 +943,7 @@ impl PokemonActiveData {
 }
 
 impl PcBuffer {
-    fn read<R: Read>(reader: &mut R, index: usize) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R, index: usize) -> Result<Self, Box<dyn Error>> {
         let mut data = [0u8; DATA_SIZE as usize];
         reader.read_exact(&mut data)?;
         Ok(PcBuffer { data, index })
@@ -964,7 +967,7 @@ impl SectionWrite for PcBuffer {
 }
 
 impl PokemonStorage {
-    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<dyn Error>> {
         let current_box = reader.read_u32::<LE>()?;
         debug!("Current box: {}", current_box);
         let mut boxes = Vec::new();
@@ -998,7 +1001,7 @@ impl PokemonStorage {
 }
 
 impl PokeBox {
-    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<Error>> {
+    fn read<R: Read>(reader: &mut R) -> Result<Self, Box<dyn Error>> {
         let mut poke_box = PokeBox::default();
         for opt_pokemon in &mut poke_box.slots {
             let mut data = [0; 80];

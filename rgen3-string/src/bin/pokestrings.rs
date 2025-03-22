@@ -1,13 +1,13 @@
 extern crate rgen3_string;
 
-use std::io::prelude::*;
+use std::io::{prelude::*, BufReader};
 
 use rgen3_string::PokeChar;
 
 fn main() {
     let mut consecutive_spaces = 0;
     let mut consecutive_terms = 0;
-    for b in std::io::stdin().bytes().map(|b| b.unwrap()) {
+    for b in BufReader::new(std::io::stdin()).bytes().map(|b| b.unwrap()) {
         match rgen3_string::decode_byte(b) {
             PokeChar::Print(ch) => {
                 consecutive_terms = 0;
