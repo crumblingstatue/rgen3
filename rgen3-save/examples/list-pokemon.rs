@@ -6,10 +6,11 @@ macro_rules! make_poke_map {
     ($($id:literal,$name:literal,$($kind:literal,)+;)+) => {{
         let mut map = HashMap::new();
         $(
-            let mut kinds = Vec::new();
+            let kinds = vec![
             $(
-                kinds.push($kind);
+                $kind,
             )+
+            ];
             map.insert($id, ($name, kinds));
         )+
         map
@@ -29,10 +30,8 @@ fn main() {
     }
     println!("== PC ==");
     for pbox in pc_boxes {
-        for slot in &pbox.slots {
-            if let Some(pokemon) = slot {
-                print_pokemon(pokemon, &pokemap);
-            }
+        for poke in pbox.slots.iter().flatten() {
+            print_pokemon(poke, &pokemap);
         }
     }
 }
