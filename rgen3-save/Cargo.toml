@@ -6,7 +6,7 @@ license = "MIT"
 repository = "https://github.com/crumblingstatue/rgen3"
 description = "Manipulate Generation 3 Pokémon save files"
 keywords = ["pokemon", "save"]
-edition = "2018"
+edition = "2024"
 
 [dependencies]
 log = "0.3"

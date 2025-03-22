@@ -2,7 +2,7 @@ extern crate rand;
 extern crate rgen3_save;
 extern crate rgen3_string;
 
-use rand::{thread_rng, Rng, ThreadRng};
+use rand::{Rng, ThreadRng, thread_rng};
 use rgen3_save::{Pokemon, SaveSectionsMut, TrainerInfo};
 use std::collections::HashSet;
 
@@ -38,7 +38,7 @@ impl<'a> PokeGen<'a> {
             rng: thread_rng(),
         }
     }
-    fn gen(&mut self) -> Pokemon {
+    fn random(&mut self) -> Pokemon {
         let mut pokemon = Pokemon::default();
         let mut name;
         loop {
@@ -108,7 +108,7 @@ fn main() {
         let mut generator = PokeGen::new(trainer);
         for b in pc_boxes.iter_mut() {
             for p in &mut b.slots {
-                *p = Some(generator.gen());
+                *p = Some(generator.random());
             }
         }
     }

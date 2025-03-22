@@ -3,8 +3,8 @@ extern crate rgen3_save;
 
 use rgen3_save::{Pokemon, Save, SaveSectionsMut};
 use std::fs::File;
-use std::io::prelude::*;
 use std::io::Cursor;
+use std::io::prelude::*;
 
 const SAVE_LEN: usize = 131072;
 

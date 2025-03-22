@@ -1,2 +1,3 @@
 [workspace]
 members = ["rgen3-string", "rgen3-save"]
+resolver = "3"

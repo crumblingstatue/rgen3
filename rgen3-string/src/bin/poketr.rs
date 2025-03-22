@@ -1,6 +1,6 @@
 extern crate rgen3_string;
 
-use std::io::{prelude::*, BufReader};
+use std::io::{BufReader, prelude::*};
 
 fn main() {
     for b in BufReader::new(std::io::stdin()).bytes().map(|b| b.unwrap()) {

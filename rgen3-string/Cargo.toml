@@ -6,4 +6,4 @@ license = "MIT"
 repository = "https://github.com/crumblingstatue/rgen3"
 description = "Encode/decode the proprietary string format used by Generation 3 Pokémon games"
 keywords = ["pokemon", "string"]
-edition = "2018"
+edition = "2024"

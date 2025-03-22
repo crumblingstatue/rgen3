@@ -1,13 +1,14 @@
 use crate::util::LowerUpper;
 use crate::{
-    rgen3_string, Game, GameType, Gender, PcBuffer, PokeBox, Pokemon, PokemonActiveData,
-    PokemonAttacks, PokemonData, PokemonEvsAndCondition, PokemonGrowth, PokemonMisc, PokemonNick,
-    PokemonStorage, Save, SaveBlock, Section, SectionData, TeamAndItems, TeamAndItemsRemaining,
-    TeamAndItemsUnknown, Time, TrainerInfo, TrainerName, DATA_SIZE, EM_RU_SA_TEAMANDITEMS_REM_LEN,
-    EM_RU_SA_TEAMANDITEMS_UNK_LEN, FRLG_PLAYERINFO_TRAILING_DATA_SIZE,
-    FRLG_PLAYERINFO_UNKNOWN_CHUNK_SIZE, FR_LG_TEAMANDITEMS_REM_LEN, FR_LG_TEAMANDITEMS_UNK_LEN,
-    N_BOXES, POKEMON_NICK_LEN, RS_EM_PLAYERINFO_TRAILING_DATA_SIZE, TEAMANDITEMS_POKE_LEN,
-    TRAINER_INFO_UNKNOWN_3_SIZE, TRAINER_NAME_LEN, UNKNOWN_SAVE_FOOTER_SIZE,
+    DATA_SIZE, EM_RU_SA_TEAMANDITEMS_REM_LEN, EM_RU_SA_TEAMANDITEMS_UNK_LEN,
+    FR_LG_TEAMANDITEMS_REM_LEN, FR_LG_TEAMANDITEMS_UNK_LEN, FRLG_PLAYERINFO_TRAILING_DATA_SIZE,
+    FRLG_PLAYERINFO_UNKNOWN_CHUNK_SIZE, Game, GameType, Gender, N_BOXES, POKEMON_NICK_LEN,
+    PcBuffer, PokeBox, Pokemon, PokemonActiveData, PokemonAttacks, PokemonData,
+    PokemonEvsAndCondition, PokemonGrowth, PokemonMisc, PokemonNick, PokemonStorage,
+    RS_EM_PLAYERINFO_TRAILING_DATA_SIZE, Save, SaveBlock, Section, SectionData,
+    TEAMANDITEMS_POKE_LEN, TRAINER_INFO_UNKNOWN_3_SIZE, TRAINER_NAME_LEN, TeamAndItems,
+    TeamAndItemsRemaining, TeamAndItemsUnknown, Time, TrainerInfo, TrainerName,
+    UNKNOWN_SAVE_FOOTER_SIZE, rgen3_string,
 };
 use byteorder::{LittleEndian as LE, ReadBytesExt, WriteBytesExt};
 use std::error::Error;
@@ -184,7 +185,7 @@ impl Section {
                              was at index {}.",
                             session.section_index, idx
                         )
-                        .into())
+                        .into());
                     }
                 }
                 SectionData::TrainerInfo(info)
@@ -198,7 +199,7 @@ impl Section {
                              was at index {}.",
                             session.section_index, idx
                         )
-                        .into())
+                        .into());
                     }
                 }
                 SectionData::TeamAndItems(TeamAndItems::read(reader, session)?)
@@ -406,11 +407,7 @@ impl Save {
         let mut unknown = [0; UNKNOWN_SAVE_FOOTER_SIZE];
         reader.read_exact(&mut unknown)?;
         let most_recent_index = if !block1.nonexistent && !block2.nonexistent {
-            if block1_idx > block2_idx {
-                0
-            } else {
-                1
-            }
+            if block1_idx > block2_idx { 0 } else { 1 }
         } else if !block1.nonexistent && block2.nonexistent {
             0
         } else if !block2.nonexistent && block1.nonexistent {
@@ -955,11 +952,7 @@ impl SectionWrite for PcBuffer {
         self.index as u16 + 5
     }
     fn cksum_area_len(&self) -> u64 {
-        if self.id() == 13 {
-            2000
-        } else {
-            3968
-        }
+        if self.id() == 13 { 2000 } else { 3968 }
     }
     fn write_data<W: Write>(&self, writer: &mut W) -> io::Result<()> {
         writer.write_all(&self.data)
